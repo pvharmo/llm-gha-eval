@@ -1,0 +1,5 @@
+{
+    "requests": [
+        "Build a workflow to run tests on every merge on the dev branch for a Rust project."
+    ]
+}
