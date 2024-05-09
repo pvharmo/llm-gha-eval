@@ -14,9 +14,9 @@ results = []
 
 models = [
     {"name": "phi3", "llm": Ollama(model="phi3")},
-    {"name": "mistral-7b", "llm": Ollama(model="mistral")},
-    {"name": "mistral-instruct", "llm": Ollama(model="mistral:instruct")},
-    {"name": "zephyr-7b", "llm": Ollama(model="zephyr")},
+    # {"name": "mistral-7b", "llm": Ollama(model="mistral")},
+    # {"name": "mistral-instruct", "llm": Ollama(model="mistral:instruct")},
+    # {"name": "zephyr-7b", "llm": Ollama(model="zephyr")},
     # {"name": "llama3-8b", "llm": Ollama(model="llama3")},
     # {"name": "mixtral-8x7b", "llm": OpenAILike(model="mistralai/Mixtral-8x7B-Instruct-v0.1", api_key=env.api_key, base_url=env.base_url)},
     # {"name": "mixtral-8x22b", "llm": OpenAILike(model="mistralai/Mixtral-8x22B-v0.1", api_key=env.api_key, base_url=env.base_url)},
