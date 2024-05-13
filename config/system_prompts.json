@@ -1,5 +1,4 @@
 {
-    "template": "{{Impersonation}} {{Task description}} {{Modifiers[]}}",
     "personification": [
         "Imagine you are a {{Qualifier}} {{Job title}} tasked with creating a GitHub Action pipeline.",
         "You are an {{Qualifier}} {{Job title}} tasked with creating a GitHub Action pipeline.",

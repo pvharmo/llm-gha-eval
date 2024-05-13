@@ -2,3 +2,7 @@ phidata
 ollama
 regex
 tqdm
+streamlit
+st-pages
+pandas
+openai

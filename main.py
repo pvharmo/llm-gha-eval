@@ -25,56 +25,56 @@ models = [
 ]
 
 
-# system_prompts = []
+system_prompts = []
 
-# for personification in system_prompts_attributes["personification"]:
-#     for task_description in system_prompts_attributes["task_description"]:
-#         for qualifiers in system_prompts_attributes["qualifiers"]:
-#             for job_title in system_prompts_attributes["job_title"]:
-#                 system_prompts.append(build_promt(personification, task_description, qualifiers, job_title))
+for personification in system_prompts_attributes["personification"]:
+    for task_description in system_prompts_attributes["task_description"]:
+        for qualifiers in system_prompts_attributes["qualifiers"]:
+            for job_title in system_prompts_attributes["job_title"]:
+                system_prompts.append(build_promt(personification, task_description, qualifiers, job_title))
 
-# for model in models:
-#     for system_prompt in tqdm(system_prompts):
-#         for prompt in prompts["requests"]:
-#             assistant = Assistant(
-#                 llm=model["llm"],
-#                 description=system_prompt,
-#                 run_id=None
-#             )
-#             response = assistant.run(prompt, stream=False)
+for model in models:
+    for system_prompt in tqdm(system_prompts):
+        for prompt in prompts["requests"]:
+            assistant = Assistant(
+                llm=model["llm"],
+                description=system_prompt,
+                run_id=None
+            )
+            response = assistant.run(prompt, stream=False)
 
-#             result = {
-#                 "prompt": prompt,
-#                 "system_prompt": system_prompt,
-#                 "code-limit-prompt": None,
-#                 "response": response,
-#                 "test results": evaluate_results(response, markdown=True)
-#             }
+            result = {
+                "prompt": prompt,
+                "system_prompt": system_prompt,
+                "code-limit-prompt": None,
+                "response": response,
+                "test results": evaluate_results(response, markdown=True)
+            }
 
-#             results.append(result)
+            results.append(result)
 
-#             # for code_limit in system_prompts_attributes["code-limit-prompts"]:
-#             #     assistant = Assistant(
-#             #         llm=model["llm"],
-#             #         description=system_prompt,
-#             #         instructions=[code_limit]
-#             #     )
-#             #     response = assistant.run(prompt, stream=False)
+            # for code_limit in system_prompts_attributes["code-limit-prompts"]:
+            #     assistant = Assistant(
+            #         llm=model["llm"],
+            #         description=system_prompt,
+            #         instructions=[code_limit]
+            #     )
+            #     response = assistant.run(prompt, stream=False)
 
-#             #     result = {
-#             #         "prompt": prompt,
-#             #         "system_prompt": system_prompt,
-#             #         "code-limit-prompt": code_limit,
-#             #         "response": response,
-#             #         "test results": evaluate_results(response, markdown=False)
-#             #     }
+            #     result = {
+            #         "prompt": prompt,
+            #         "system_prompt": system_prompt,
+            #         "code-limit-prompt": code_limit,
+            #         "response": response,
+            #         "test results": evaluate_results(response, markdown=False)
+            #     }
 
-#             #     results.append(result)
+            #     results.append(result)
 
-#     with open(f'results/{model["name"]}.json', "w") as file:
-#         json.dump(results , file)
+    with open(f'results/{model["name"]}.json', "w") as file:
+        json.dump(results , file)
 
-# # read response.txt
-# # response = open("response.txt").read()
+# read response.txt
+# response = open("response.txt").read()
 
-# # evaluate_results(response, markdown=True)
+# evaluate_results(response, markdown=True)
