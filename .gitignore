@@ -3,6 +3,8 @@ outputs/*
 !outputs/.gitkeep
 results/*
 !results/.gitkeep
+dataset/*
+!dataset/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
