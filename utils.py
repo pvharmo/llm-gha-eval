@@ -8,11 +8,13 @@ def build_promt(personification, task_description, qualifiers, job_title):
     return fill_personification(personification, job_title, qualifiers) + " " + task_description
 
 def evaluate_results(response, markdown=True):
+    print("response: ", response)
     if markdown:
         codes = re.findall(r'(?<=```yaml)([\s\S]*?)(?=```)', response)
     else:
         codes = [response]
     results = []
+    print("codes: ", codes)
     for code in codes:
         with open('outputs/test.yml', 'w') as file:
             file.write(code)

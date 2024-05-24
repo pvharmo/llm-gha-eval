@@ -27,6 +27,7 @@ prompts = json.loads(open("./config/prompts.json").read())
 
 models = pd.DataFrame([
     {"run": False, "name": "phi3", "full name": "phi3", "local": True,},
+    {"run": False, "name": "phi3 small", "full name": "phi3", "local": True,},
     {"run": False, "name": "mistral 7b", "full name": "mistral", "local": True,},
     {"run": False, "name": "mistral instruct", "full name": "mistral:instruct", "local": True,},
     {"run": False, "name": "zephyr 7b", "full name": "zephyr", "local": True,},
