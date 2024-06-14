@@ -1,5 +1,6 @@
 import regex as re
 import subprocess
+import yaml
 
 def fill_personification(personification, job_title, qualifiers):
     return personification.replace("{{Job title}}", job_title).replace("{{Qualifier}}", qualifiers)
@@ -29,3 +30,9 @@ def evaluate_results(response, markdown=True):
         results.append(result)
 
     return results
+
+def compare_workflows(original_workflow, generated_workflow):
+    parsed_original = yaml.parse(original_workflow)
+    parsed_generated = yaml.parse(generated_workflow)
+
+    parsed_original["on"] = parsed_generated["on"]

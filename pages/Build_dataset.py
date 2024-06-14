@@ -9,7 +9,6 @@ import json
 from stqdm import stqdm
 import msgspec
 
-# Authentication is defined via github.Auth
 from github import Auth
 
 st.set_page_config(
@@ -30,115 +29,119 @@ encoder = msgspec.json.Encoder()
 def has_common_element(list1, list2):
     return any(element in list2 for element in list1)
 
-def get_repo_data(g: Github, repo_data):
-    path_exists = os.path.exists(f"./dataset/{repo_data['name']}")
-    if path_exists or repo_data["isArchived"] or repo_data["isDisabled"]:
-        st.write(f"Skipping {repo_data['name']}, {'path exists' if path_exists else ('is archived' if repo_data['isArchived'] else 'is disabled')}")
-        return
+def get_repo_data(g: Github, repo_data, container):
+    with container:
+        path_exists = os.path.exists(f"./dataset/{repo_data['name']}")
+        if path_exists or repo_data["isArchived"] or repo_data["isDisabled"]:
+            st.write(f"Skipping {repo_data['name']}, {'path exists' if path_exists else ('is archived' if repo_data['isArchived'] else 'is disabled')}")
+            return
 
-    repo = g.get_repo(repo_data["name"])
+        repo = g.get_repo(repo_data["name"])
 
-    st.write(f"Processing {repo_data['name']}")
+        st.write(f"Processing {repo_data['name']}")
 
-    try:
-        contents = repo.get_contents("/.github/workflows")
-    except UnknownObjectException as e:
-        st.write("No workflows found")
-        return
+        try:
+            contents = repo.get_contents("/.github/workflows")
+        except UnknownObjectException as e:
+            st.write("No workflows found")
+            return
 
-    st.write(f"Found {len(contents)} workflows")
+        st.write(f"Found {len(contents)} workflows")
 
-    os.makedirs(f"./dataset/{repo_data['name']}/workflows", exist_ok=True)
-    os.makedirs(f"./dataset/{repo_data['name']}/configs", exist_ok=True)
+        os.makedirs(f"./dataset/{repo_data['name']}/workflows", exist_ok=True)
+        os.makedirs(f"./dataset/{repo_data['name']}/configs", exist_ok=True)
 
-    for content in contents:
-        if content.type != "file":
-            continue
-        file = repo.get_contents(content.path).decoded_content.decode("utf-8")
-        with open(f'./dataset/{repo_data["name"]}/workflows/{content.path.split("/")[-1]}', 'w') as f:
-            f.write(file)
+        for content in contents:
+            if content.type != "file":
+                continue
+            file = repo.get_contents(content.path).decoded_content.decode("utf-8")
+            with open(f'./dataset/{repo_data["name"]}/workflows/{content.path.split("/")[-1]}', 'w') as f:
+                f.write(file)
 
-    tree = repo.get_git_tree(repo_data["defaultBranch"], recursive=True)
-    tree = [t.path for t in tree.tree]
+        tree = repo.get_git_tree(repo_data["defaultBranch"], recursive=True)
+        tree = [t.path for t in tree.tree]
 
-    with open(f'./dataset/{repo_data["name"]}/tree.csv', 'w') as f:
-        f.write("\n".join(tree))
+        with open(f'./dataset/{repo_data["name"]}/tree.csv', 'w') as f:
+            f.write("\n".join(tree))
 
-    try:
-        license = repo.get_license()
-    except:
-        license = None
+        try:
+            license = repo.get_license()
+        except:
+            license = None
 
-    properties = {
-        "license": license.license.name if license else "No license",
-        "defaultBranch": repo_data["defaultBranch"],
-        "languages": repo.get_languages(),
-        "tree_truncated": len(tree) == 100000,
-        "package_specs": {
-            "package.json": [], # Node, Bun, Deno
-            "requirements": [], # Python
-            "pyproject.toml": [], # Python
-            "cargo.toml": [], # Rust
-            "go.mod": [], # Go
-            "pom.xml": [], # Maven
-            "build.gradle": [], # Gradle
-            ".csproj": [], # .NET
-            "packages.config": [], # .NET
-            "composer.json": [], # PHP
-            "Gemfile": [], # Ruby
-            "CMakeLists.txt": [], # C/C++
-            "Makefile": [], # C/C++
-            "Dockerfile": [], # Docker
-            "docker-compose.yml": [], # Docker
+        properties = {
+            "license": license.license.name if license else "No license",
+            "defaultBranch": repo_data["defaultBranch"],
+            "languages": repo.get_languages(),
+            "tree_truncated": len(tree) == 100000,
+            "package_specs": {
+                "package.json": [], # Node, Bun, Deno
+                "requirements": [], # Python
+                "pyproject.toml": [], # Python
+                "cargo.toml": [], # Rust
+                "go.mod": [], # Go
+                "pom.xml": [], # Maven
+                "build.gradle": [], # Gradle
+                ".csproj": [], # .NET
+                "packages.config": [], # .NET
+                "composer.json": [], # PHP
+                "Gemfile": [], # Ruby
+                "CMakeLists.txt": [], # C/C++
+                "Makefile": [], # C/C++
+                "Dockerfile": [], # Docker
+                "docker-compose.yml": [], # Docker
+            }
         }
-    }
 
-    ignored_dirs = [
-        "packages",
-        "node_modules",
-        "jspm_packages",
-        "bower_components",
-        "web_modules",
-        ".cache",
-        "share",
-        "__pypackages__",
-        "venv",
-        "vendor",
-        "target",
-        "debug",
-        "build",
-        "dist",
-        "out",
-        "bin",
-        "obj",
-        "static",
-        "public",
-        "public_html",
-        ".gradle",
-        "_deps",
-        "third_party",
-        "third-party",
-        "thirdparty",
-        "third-parties",
-        "thirdparties",
-    ]
+        ignored_dirs = [
+            "packages",
+            "node_modules",
+            "jspm_packages",
+            "bower_components",
+            "web_modules",
+            ".cache",
+            "share",
+            "__pypackages__",
+            "venv",
+            "vendor",
+            "target",
+            "debug",
+            "build",
+            "dist",
+            "out",
+            "bin",
+            "obj",
+            "static",
+            "public",
+            "public_html",
+            ".gradle",
+            "_deps",
+            "third_party",
+            "third-party",
+            "thirdparty",
+            "third-parties",
+            "thirdparties",
+        ]
 
-    for t in tree:
-        has_common_element(t.split("/"), ignored_dirs)
-        for spec in properties["package_specs"].keys():
-            if spec in t:
-                file = repo.get_contents(t)
-                if content.type != "file":
-                    continue
-                with open(f'./dataset/{repo_data["name"]}/configs/{len(properties["package_specs"][spec])}-{spec}', 'w') as f:
-                    f.write(file.decoded_content.decode("utf-8"))
-                properties["package_specs"][spec].append(t)
+        for t in tree:
+            has_common_element(t.split("/"), ignored_dirs)
+            for spec in properties["package_specs"].keys():
+                if spec in t:
+                    file = repo.get_contents(t)
+                    if content.type != "file":
+                        continue
+                    try:
+                        with open(f'./dataset/{repo_data["name"]}/configs/{len(properties["package_specs"][spec])}-{spec}', 'w') as f:
+                            f.write(file.decoded_content.decode("utf-8"))
+                    except:
+                        pass
+                    properties["package_specs"][spec].append(t)
 
-    with open(f'./dataset/{repo_data["name"]}/properties.json', 'wb') as f:
-        msgpack = encoder.encode(properties)
-        f.write(msgpack)
+        with open(f'./dataset/{repo_data["name"]}/properties.json', 'wb') as f:
+            msgpack = encoder.encode(properties)
+            f.write(msgpack)
 
-def build_dataset():
+def build_dataset(nb_repo):
     repos = pd.read_csv("./config/repos-1-year.csv")
 
     auth = Auth.Token(gh_token)
@@ -152,8 +155,10 @@ def build_dataset():
     # }
     # get_repo_data(g, r)
 
-    repos.loc(repos["isArchived"] == False).loc(repos["isDisabled"] == False).sample(10).progress_apply(lambda repo_data: get_repo_data(g, repo_data), axis=1)
+    container = st.container(height=900)
+    repos.loc[(repos["isArchived"] == False) & (repos["isDisabled"] == False)].sample(nb_repo).progress_apply(lambda repo_data: get_repo_data(g, repo_data, container), axis=1)
 
     g.close()
 
-st.button("Start", on_click=build_dataset)
+nb_repo = st.number_input("Number of repositories to fetch", value=50, min_value=1, max_value=100000)
+st.button("Start", on_click=lambda: build_dataset(nb_repo))
