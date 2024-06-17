@@ -1,0 +1,60 @@
+from typing import Iterable
+from openai.types.chat import ChatCompletion
+from openai.types.chat.chat_completion_user_message_param import ChatCompletionUserMessageParam
+from openai import OpenAI, Stream
+from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
+import env
+from pprint import pprint
+
+import http.client
+
+class Assistant:
+    def __init__(self, temperature = 0.1, model = "meta-llama/Meta-Llama-3-8B-Instruct", description = "", messages = []) -> None:
+        self.temperature = temperature
+        self.model = model
+        self.description = description
+        self.top_p = 1
+        self.client = OpenAI(
+            api_key=env.api_key,
+            base_url=env.base_url,
+        )
+
+        self.messages = messages
+
+    def run(self, question: str, stream: bool = False):
+        self.messages.append({
+            "role": "user",
+            "content": question
+        })
+
+        messages = [
+            {
+                "role": "system",
+                "content": self.description
+            },
+            *self.messages
+        ]
+
+        pprint(messages)
+
+        res: Stream = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages, # type: ignore
+            temperature=self.temperature,
+            top_p=self.top_p,
+            stream=stream
+        )
+
+        response = ""
+        for chunk in res:
+            if chunk.choices[0].delta.content is not None:
+                response += chunk.choices[0].delta.content
+                yield chunk.choices[0].delta.content
+
+        self.messages.append({
+            "role": "assistant",
+            "content": response
+        })
+
+    def get_messages(self):
+        return self.messages
