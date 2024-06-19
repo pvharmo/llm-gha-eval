@@ -21,7 +21,7 @@ class Assistant:
 
         self.messages = messages
 
-    def run(self, question: str, stream: bool = False):
+    def run_stream(self, question: str) -> Iterable[str]:
         self.messages.append({
             "role": "user",
             "content": question
@@ -35,14 +35,12 @@ class Assistant:
             *self.messages
         ]
 
-        pprint(messages)
-
         res: Stream = self.client.chat.completions.create(
             model=self.model,
             messages=messages, # type: ignore
             temperature=self.temperature,
             top_p=self.top_p,
-            stream=stream
+            stream=True
         )
 
         response = ""
@@ -55,6 +53,37 @@ class Assistant:
             "role": "assistant",
             "content": response
         })
+
+    def run(self, question: str) -> str:
+        self.messages.append({
+            "role": "user",
+            "content": question
+        })
+
+        messages = [
+            {
+                "role": "system",
+                "content": self.description
+            },
+            *self.messages
+        ]
+
+        res = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages, # type: ignore
+            temperature=self.temperature,
+            top_p=self.top_p,
+            stream=False
+        )
+
+        response = res.choices[0].message.content
+
+        self.messages.append({
+            "role": "assistant",
+            "content": response
+        })
+
+        return response
 
     def get_messages(self):
         return self.messages

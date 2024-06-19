@@ -5,6 +5,8 @@ results/*
 !results/.gitkeep
 dataset/*
 !dataset/.gitkeep
+sandbox/*
+!sandbox/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
