@@ -31,7 +31,7 @@ def has_common_element(list1, list2):
 
 def get_repo_data(g: Github, repo_data, container):
     with container:
-        path_exists = os.path.exists(f"./dataset/{repo_data['name']}")
+        path_exists = os.path.exists(f"./dataset/repos/{repo_data['name']}")
         if path_exists or repo_data["isArchived"] or repo_data["isDisabled"]:
             st.write(f"Skipping {repo_data['name']}, {'path exists' if path_exists else ('is archived' if repo_data['isArchived'] else 'is disabled')}")
             return
@@ -45,23 +45,26 @@ def get_repo_data(g: Github, repo_data, container):
         except UnknownObjectException as e:
             st.write("No workflows found")
             return
-
+        
         st.write(f"Found {len(contents)} workflows")
+        
+        if len(contents) <= 2:
+            return
 
-        os.makedirs(f"./dataset/{repo_data['name']}/workflows", exist_ok=True)
-        os.makedirs(f"./dataset/{repo_data['name']}/configs", exist_ok=True)
+        os.makedirs(f"./dataset/repos/{repo_data['name']}/workflows", exist_ok=True)
+        os.makedirs(f"./dataset/repos/{repo_data['name']}/configs", exist_ok=True)
 
         for content in contents:
             if content.type != "file":
                 continue
             file = repo.get_contents(content.path).decoded_content.decode("utf-8")
-            with open(f'./dataset/{repo_data["name"]}/workflows/{content.path.split("/")[-1]}', 'w') as f:
+            with open(f'./dataset/repos/{repo_data["name"]}/workflows/{content.path.split("/")[-1]}', 'w') as f:
                 f.write(file)
 
         tree = repo.get_git_tree(repo_data["defaultBranch"], recursive=True)
         tree = [t.path for t in tree.tree]
 
-        with open(f'./dataset/{repo_data["name"]}/tree.csv', 'w') as f:
+        with open(f'./dataset/repos/{repo_data["name"]}/tree.csv', 'w') as f:
             f.write("\n".join(tree))
 
         try:
@@ -131,18 +134,18 @@ def get_repo_data(g: Github, repo_data, container):
                     if content.type != "file":
                         continue
                     try:
-                        with open(f'./dataset/{repo_data["name"]}/configs/{len(properties["package_specs"][spec])}-{spec}', 'w') as f:
+                        with open(f'./dataset/repos/{repo_data["name"]}/configs/{len(properties["package_specs"][spec])}-{spec}', 'w') as f:
                             f.write(file.decoded_content.decode("utf-8"))
                     except:
                         pass
                     properties["package_specs"][spec].append(t)
 
-        with open(f'./dataset/{repo_data["name"]}/properties.json', 'wb') as f:
+        with open(f'./dataset/repos/{repo_data["name"]}/properties.json', 'wb') as f:
             msgpack = encoder.encode(properties)
             f.write(msgpack)
 
 def build_dataset(nb_repo):
-    repos = pd.read_csv("./config/repos-1-year.csv")
+    repos = pd.read_csv("./config/results-1500-stars-20-june.csv")
 
     auth = Auth.Token(gh_token)
     g = Github(auth=auth)
