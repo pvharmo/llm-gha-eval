@@ -28,7 +28,7 @@ def run_benchmark():
         assistant = Assistant(
             temperature=0.1,
             model="meta-llama/Meta-Llama-3-8B-Instruct",
-            description="""
+            system_prompt="""
 You are an assistant that will be tasked to help a user create a Github Action workflow.
 As a first step you will generate a description of a workflow that can be used to create the workflow yaml file.
 Only give the description of the workflow. Do not include the yaml file.

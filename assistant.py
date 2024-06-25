@@ -9,10 +9,10 @@ from pprint import pprint
 import http.client
 
 class Assistant:
-    def __init__(self, temperature = 0.1, model = "meta-llama/Meta-Llama-3-8B-Instruct", description = "", messages = []) -> None:
+    def __init__(self, temperature = 0.1, model = "meta-llama/Meta-Llama-3-8B-Instruct", system_prompt = "", messages = []) -> None:
         self.temperature = temperature
         self.model = model
-        self.description = description
+        self.description = system_prompt
         self.top_p = 1
         self.client = OpenAI(
             api_key=env.api_key,

@@ -1,5 +1,8 @@
 {
     "requests": [
-        "Build a workflow to run tests on every merge on the dev branch for a Rust project."
+        {
+            "repository": "amilajack/eslint-plugin-compat",
+            "detailed_description": "http://localhost:8080/echo"
+        }
     ]
 }

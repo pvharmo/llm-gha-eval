@@ -1,15 +1,16 @@
+import os
+import regex
 import streamlit as st
 import json
 import pandas as pd
 from stqdm import stqdm
 from menu import menu
+from pathlib import Path
 
-from phi.assistant.assistant import Assistant
-from phi.llm.ollama.chat import Ollama
-from phi.llm.openai.like import OpenAILike
+from assistant import Assistant
 
 import env
-from utils import build_promt, evaluate_results
+from utils import action_validator, llm_as_a_judge, deepdiff_compare, actions_comparison
 
 st.set_page_config(
     page_title="Run LLM benchmarks",
@@ -39,97 +40,76 @@ models = pd.DataFrame([
     {"run": False, "name": "wizardlm-2 8x22b", "full name": "microsoft/WizardLM-2-8x22B", "local": False,},
 ])
 
-personifications = pd.DataFrame(system_prompts_attributes["personification"], columns=["personification"])
-personifications.insert(0, "run", False)
-tasks_description = pd.DataFrame(system_prompts_attributes["task_description"], columns=["task description"])
-tasks_description.insert(0, "run", False)
-qualifiers = pd.DataFrame(system_prompts_attributes["qualifiers"], columns=["qualifier"])
-qualifiers.insert(0, "run", False)
-job_titles = pd.DataFrame(system_prompts_attributes["job_title"], columns=["job title"])
-job_titles.insert(0, "run", False)
-prompts = pd.DataFrame(prompts["requests"], columns=["prompt"])
-prompts.insert(0, "run", False)
-
 with st.form("my_form"):
     st.write("### Models")
     models = st.data_editor(models, hide_index=True, disabled=["name", "full name", "local"], use_container_width=True)
-    st.write("### System prompt templates")
-    personifications = st.data_editor(personifications, hide_index=True, disabled=["personification"], use_container_width=True)
-    st.write("### Task desciptions")
-    tasks_description = st.data_editor(tasks_description, hide_index=True, disabled=["task description"], use_container_width=True)
-    st.write("### Qualifiers")
-    qualifiers = st.data_editor(qualifiers, hide_index=True, disabled=["qualifier"], use_container_width=True)
-    st.write("### Job titles")
-    job_titles = st.data_editor(job_titles, hide_index=True, disabled=["job title"], use_container_width=True)
-    st.write("### Prompts")
-    prompts = st.data_editor(prompts, hide_index=True, disabled=["prompt"], use_container_width=True)
 
     submit = st.form_submit_button(label="Submit")
 
-system_prompts = []
+# st.write("## Prompts")
+# for _, prompt in prompts[prompts["run"]].iterrows():
+#     st.write("- " + prompt["prompt"])
 
+system_prompt = "You will be given a description of a GitHub Action workflow file. You will have to generate the workflow file based on the description. Answer only with the file code. Do not add any additional information."
 
-st.write("## System prompts")
-for _, personification in personifications[personifications["run"]].iterrows():
-    for _, task_description in tasks_description[tasks_description["run"]].iterrows():
-        for _, qualifier in qualifiers[qualifiers["run"]].iterrows():
-            for _, job_title in job_titles[job_titles["run"]].iterrows():
-                system_prompt = build_promt(personification[1], task_description[1], qualifier[1], job_title[1])
-                st.write("- " + system_prompt)
-                system_prompts.append(system_prompt)
+workflows = []
 
-st.write("## Prompts")
-for _, prompt in prompts[prompts["run"]].iterrows():
-    st.write("- " + prompt["prompt"])
+for owner in stqdm(os.listdir(env.repository_directories)):
+    for repo_name in os.listdir(env.repository_directories + "/" + owner):
+        directory = env.repository_directories + "/" + owner + "/" + repo_name
+        for workflow_file in os.listdir(directory + "/workflows"):
+            workflows.append({
+                "owner": owner,
+                "repo_name": repo_name,
+                "workflow_file": workflow_file,
+                "directory": directory
+            })
 
 st.write("## Benchmarks running")
 if submit:
     for i, model_params in models.loc[models["run"]].iterrows():
         st.write(f"- Running {model_params['name']}")
-        if model_params["local"]:
-            model = Ollama(model=model_params["full name"])
-        else:
-            model = OpenAILike(model=model_params["full name"], api_key=env.api_key, base_url=env.base_url)
 
         results = []
 
-        for system_prompt in stqdm(system_prompts):
-            for _, prompt in prompts[prompts["run"]].iterrows():
-                assistant = Assistant(
-                    llm=model,
-                    description=system_prompt,
-                    run_id=None
-                )
-                response = assistant.run(prompt["prompt"], stream=False)
+        for workflow_infos in stqdm(workflows):
+            assistant = Assistant(model=model_params["full name"], system_prompt=system_prompt)
+            if workflow_infos["owner"] != "amilajack":
+                continue
+            directory = workflow_infos["directory"]
+            workflow_file = workflow_infos["workflow_file"]
 
-                result = {
-                    "prompt": prompt["prompt"],
-                    "system_prompt": system_prompt,
-                    "code-limit-prompt": None,
-                    "response": response,
-                    "test results": evaluate_results(response, markdown=True)
-                }
+            with open(directory + "/detailed_descriptions/" + workflow_file + ".md") as file:
+                description = file.read()
 
-                results.append(result)
+            with open(directory + "/workflows/" + workflow_file) as file:
+                original = file.read()
 
-                # for code_limit in system_prompts_attributes["code-limit-prompts"]:
-                #     assistant = Assistant(
-                #         llm=model["llm"],
-                #         description=system_prompt,
-                #         instructions=[code_limit]
-                #     )
-                #     response = assistant.run(prompt, stream=False)
+            response = assistant.run(description)
 
-                #     result = {
-                #         "prompt": prompt,
-                #         "system_prompt": system_prompt,
-                #         "code-limit-prompt": code_limit,
-                #         "response": response,
-                #         "test results": evaluate_results(response, markdown=False)
-                #     }
+            markdown=True
+            if markdown:
+                workflow = regex.match(r'(?<=```yaml)([\s\S]*?)(?=```)', response)
+                workflow = workflow.group(0) if workflow else response
+            else:
+                workflow = response
 
-                #     results.append(result)
+            result = {
+                "model": model_params["name"],
+                "description": description,
+                "system_prompt": system_prompt,
+                "response": response,
+                "actions similarities": actions_comparison(original, workflow),
+                "deepdiff": deepdiff_compare(original, workflow),
+                "action-validator results": action_validator(workflow),
+                "LLM-as-a-Judge results": llm_as_a_judge(workflow, "meta-llama/Meta-Llama-3-70B-Instruct"),
+            }
 
-        print(results)
+
+            results.append(result)
+
+            break
+
+        # print(results)
         with open(f'results/{model_params["name"]}.json', "w") as file:
             json.dump(results , file)
