@@ -22,22 +22,42 @@ if len(files) > 0:
 
     results = json.loads(open(f"results/{model_name}.json").read())
 
-    total_success = 0
-    count = 0
+    avg_jaccard = 0
+    avg_diff_nb_steps = 0
+    avg_events_dist = 0
+    avg_jobs_dist = 0
+    avg_event_judge = 0
+    avg_jobs_judge = 0
     for result in results:
-        count += 1
-        for test_result in result["test results"]:
-            if test_result["valid"] == True:
-                total_success += 1
-                break
+        avg_jaccard += result["actions similarities"]["jaccard_index"]
+        avg_diff_nb_steps += result["actions similarities"]["diff_nb_steps"]
+        avg_events_dist += result["deepdiff"]["events"]["distance"]
+        avg_jobs_dist += result["deepdiff"]["jobs"]["distance"]
+        avg_event_judge += result["LLM-as-a-Judge results"]["events"]
+        avg_jobs_judge += result["LLM-as-a-Judge results"]["jobs"]
 
-    print(total_success / count)
+    avg_jaccard = avg_jaccard / len(results)
+    avg_diff_nb_steps = avg_diff_nb_steps / len(results)
+    avg_events_dist = avg_events_dist / len(results)
+    avg_jobs_dist = avg_jobs_dist / len(results)
+    avg_event_judge = avg_event_judge / len(results)
+    avg_jobs_judge = avg_jobs_judge / len(results)
+
+    st.write(f"""
+        ## Average results
+        - Jaccard index: {avg_jaccard}
+        - Diff nb steps: {avg_diff_nb_steps}
+        - Events distance: {avg_events_dist}
+        - Jobs distance: {avg_jobs_dist}
+        - LLM-as-a-Judge events: {avg_event_judge}
+        - LLM-as-a-Judge jobs: {avg_jobs_judge}
+        """)
 
     st.write("## Results")
 
     for result in results:
         st.write("### Prompt")
-        st.write(result["prompt"])
+        st.write(result["description"])
         st.write("### System Prompt")
         st.write(result["system_prompt"])
         st.write("### Response")
@@ -45,11 +65,11 @@ if len(files) > 0:
             st.write(result["response"])
         st.write("### Test Results")
         for test_result in result["test results"]:
-            st.write("#### Valid")
-            st.write(test_result["valid"])
+            st.write("#### Actions similarities")
+            st.json(test_result["actions similarities"])
             st.write("#### Analysis output")
             with st.expander("Show"):
                 st.code(test_result["result_output"])
             st.write("#### Generated code")
             with st.expander("Show"):
-                st.code(test_result["code"], language="yaml")
+                st.code(test_result["response"], language="yaml")

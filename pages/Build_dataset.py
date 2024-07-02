@@ -8,8 +8,10 @@ import os
 import json
 from stqdm import stqdm
 import msgspec
-
 from github import Auth
+
+from assistant import Assistant
+import env
 
 st.set_page_config(
     page_title="Build dataset",
@@ -45,9 +47,9 @@ def get_repo_data(g: Github, repo_data, container):
         except UnknownObjectException as e:
             st.write("No workflows found")
             return
-        
+
         st.write(f"Found {len(contents)} workflows")
-        
+
         if len(contents) <= 2:
             return
 
@@ -163,5 +165,50 @@ def build_dataset(nb_repo):
 
     g.close()
 
+
 nb_repo = st.number_input("Number of repositories to fetch", value=50, min_value=1, max_value=100000)
 st.button("Start", on_click=lambda: build_dataset(nb_repo))
+
+def create_detailed_descriptions():
+    workflows = []
+
+    for owner in stqdm(os.listdir(env.repository_directories)):
+        for repo_name in os.listdir(env.repository_directories + "/" + owner):
+            directory = env.repository_directories + "/" + owner + "/" + repo_name
+            for workflow_file in os.listdir(directory + "/workflows"):
+                workflows.append({
+                    "owner": owner,
+                    "repo_name": repo_name,
+                    "workflow_file": workflow_file,
+                    "directory": directory
+                })
+
+    for workflow_infos in stqdm(workflows):
+        directory = workflow_infos["directory"]
+        workflow_file = workflow_infos["workflow_file"]
+
+        st.write(workflow_infos["directory"])
+
+        if os.path.exists(directory + "/detailed_descriptions/" + workflow_file + ".md"):
+            continue
+
+        assistant_explainer = Assistant(
+            model="Qwen/Qwen2-72B-Instruct",
+            system_prompt="""
+                You will be given a github actions workflow and you will have to explain what it does. Add enough details so the exact workflow can be reproduced only from this description.
+                """
+        )
+
+        with open(directory + "/workflows/" + workflow_file) as file:
+            content = file.read()
+
+        original_workflow_description = assistant_explainer.run(content)
+
+        if not os.path.exists(directory + "/detailed_descriptions"):
+            os.makedirs(directory + "/detailed_descriptions")
+
+        with open(directory + "/detailed_descriptions/" + workflow_file + ".md", "w") as file:
+            file.write(original_workflow_description)
+
+
+st.button("Create detailed descriptions", on_click=lambda: create_detailed_descriptions())

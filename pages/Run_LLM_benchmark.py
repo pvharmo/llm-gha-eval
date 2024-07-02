@@ -1,11 +1,12 @@
 import os
-import regex
+import re as regex
 import streamlit as st
 import json
 import pandas as pd
 from stqdm import stqdm
 from menu import menu
 from pathlib import Path
+import yaml
 
 from assistant import Assistant
 
@@ -27,17 +28,17 @@ system_prompts_attributes = json.loads(open("./config/system_prompts.json").read
 prompts = json.loads(open("./config/prompts.json").read())
 
 models = pd.DataFrame([
-    {"run": False, "name": "phi3", "full name": "phi3", "local": True,},
-    {"run": False, "name": "phi3 small", "full name": "phi3", "local": True,},
-    {"run": False, "name": "mistral 7b", "full name": "mistral", "local": True,},
-    {"run": False, "name": "mistral instruct", "full name": "mistral:instruct", "local": True,},
-    {"run": False, "name": "zephyr 7b", "full name": "zephyr", "local": True,},
-    {"run": False, "name": "llama3 8b", "full name": "llama3", "local": True,},
+    {"run": False, "name": "phi3 mini", "full name": "phi3:mini", "local": True,},
+    {"run": False, "name": "phi3 medium", "full name": "phi3:medium", "local": True,},
     {"run": False, "name": "wizardlm-2 7b", "full name": "wizardlm2", "local": True,},
+    {"run": False, "name": "zephyr 7b", "full name": "zephyr", "local": True,},
+    {"run": False, "name": "mistral 7b instruct 0.3", "full name": "mistralai/Mistral-7B-Instruct-v0.3", "local": False,},
+    {"run": False, "name": "llama3 8b", "full name": "meta-llama/Meta-Llama-3-8B-Instruct", "local": False,},
     {"run": False, "name": "mixtral 8x7b", "full name": "mistralai/Mixtral-8x7B-Instruct-v0.1", "local": False,},
     {"run": False, "name": "mixtral 22x7b", "full name": "mistralai/Mixtral-8x22B-v0.1", "local": False,},
     {"run": False, "name": "llama3 70b", "full name": "meta-llama/Meta-Llama-3-70B-Instruct", "local": False,},
     {"run": False, "name": "wizardlm-2 8x22b", "full name": "microsoft/WizardLM-2-8x22B", "local": False,},
+    {"run": False, "name": "Qwen2 72b instruct", "full name": "Qwen/Qwen2-72B-Instruct", "local": False,},
 ])
 
 with st.form("my_form"):
@@ -45,10 +46,6 @@ with st.form("my_form"):
     models = st.data_editor(models, hide_index=True, disabled=["name", "full name", "local"], use_container_width=True)
 
     submit = st.form_submit_button(label="Submit")
-
-# st.write("## Prompts")
-# for _, prompt in prompts[prompts["run"]].iterrows():
-#     st.write("- " + prompt["prompt"])
 
 system_prompt = "You will be given a description of a GitHub Action workflow file. You will have to generate the workflow file based on the description. Answer only with the file code. Do not add any additional information."
 
@@ -71,10 +68,11 @@ if submit:
         st.write(f"- Running {model_params['name']}")
 
         results = []
+        yaml_parsing_failed = []
 
         for workflow_infos in stqdm(workflows):
             assistant = Assistant(model=model_params["full name"], system_prompt=system_prompt)
-            if workflow_infos["owner"] != "amilajack":
+            if workflow_infos["owner"] != "web-infra-dev":
                 continue
             directory = workflow_infos["directory"]
             workflow_file = workflow_infos["workflow_file"]
@@ -87,29 +85,41 @@ if submit:
 
             response = assistant.run(description)
 
-            markdown=True
-            if markdown:
-                workflow = regex.match(r'(?<=```yaml)([\s\S]*?)(?=```)', response)
+            if "```yaml" in response:
+                workflow = regex.search(r'(?<=```yaml)([\s\S]*?)(?=```)', response)
+                workflow = workflow.group(0) if workflow else response
+            elif "```" in response:
+                workflow = regex.search(r'(?<=```)([\s\S]*?)(?=```)', response)
                 workflow = workflow.group(0) if workflow else response
             else:
                 workflow = response
+            try:
+                parsed_workflow = yaml.safe_load(workflow)
+                parsed_original = yaml.safe_load(original)
+            except yaml.YAMLError as e:
+                yaml_parsing_failed.append({
+                    "response": response,
+                    "workflow": workflow,
+                    "description": description,
+                    "error": str(e)
+                })
+                continue
 
             result = {
-                "model": model_params["name"],
                 "description": description,
-                "system_prompt": system_prompt,
                 "response": response,
-                "actions similarities": actions_comparison(original, workflow),
-                "deepdiff": deepdiff_compare(original, workflow),
+                "actions similarities": actions_comparison(parsed_original, parsed_workflow),
+                "deepdiff": deepdiff_compare(parsed_original, parsed_workflow),
                 "action-validator results": action_validator(workflow),
-                "LLM-as-a-Judge results": llm_as_a_judge(workflow, "meta-llama/Meta-Llama-3-70B-Instruct"),
+                "LLM-as-a-Judge results": llm_as_a_judge(workflow, description, "Qwen/Qwen2-72B-Instruct"),
             }
-
 
             results.append(result)
 
-            break
-
-        # print(results)
         with open(f'results/{model_params["name"]}.json', "w") as file:
-            json.dump(results , file)
+            json.dump({
+                "results": results,
+                "yaml parsing failed": yaml_parsing_failed,
+                "system_prompt": system_prompt,
+                "model": model_params["full name"]
+            }, file)
