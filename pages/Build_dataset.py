@@ -1,5 +1,4 @@
-from github import Github
-from github import GithubException, UnknownObjectException
+from github import GithubException, UnknownObjectException, ContentFile, Github
 import streamlit as st
 from menu import menu
 from env import gh_token
@@ -43,7 +42,7 @@ def get_repo_data(g: Github, repo_data, container):
         st.write(f"Processing {repo_data['name']}")
 
         try:
-            contents = repo.get_contents("/.github/workflows")
+            contents: list[ContentFile.ContentFile] = repo.get_contents("/.github/workflows") # type: ignore
         except UnknownObjectException as e:
             st.write("No workflows found")
             return
@@ -59,9 +58,9 @@ def get_repo_data(g: Github, repo_data, container):
         for content in contents:
             if content.type != "file":
                 continue
-            file = repo.get_contents(content.path).decoded_content.decode("utf-8")
+            file = repo.get_contents(content.path).decoded_content.decode("utf-8") # type: ignore
             with open(f'./dataset/repos/{repo_data["name"]}/workflows/{content.path.split("/")[-1]}', 'w') as f:
-                f.write(file)
+                f.write(file) # type: ignore
 
         tree = repo.get_git_tree(repo_data["defaultBranch"], recursive=True)
         tree = [t.path for t in tree.tree]
@@ -132,8 +131,8 @@ def get_repo_data(g: Github, repo_data, container):
             has_common_element(t.split("/"), ignored_dirs)
             for spec in properties["package_specs"].keys():
                 if spec in t:
-                    file = repo.get_contents(t)
-                    if content.type != "file":
+                    file: ContentFile.ContentFile = repo.get_contents(t) # type: ignore
+                    if file.type != "file":
                         continue
                     try:
                         with open(f'./dataset/repos/{repo_data["name"]}/configs/{len(properties["package_specs"][spec])}-{spec}', 'w') as f:

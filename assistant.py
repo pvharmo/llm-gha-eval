@@ -91,7 +91,7 @@ class Assistant:
             "content": response
         })
 
-        return response
+        return response or ""
 
     def get_messages(self):
         return self.messages

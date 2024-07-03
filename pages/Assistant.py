@@ -45,13 +45,13 @@ question = st.chat_input("Describe the workflow you need here...")
 if question:
     chat_msg = st.chat_message("user")
     chat_msg.write(question)
-    assistant_response = assistant.run(question, stream=True)
+    assistant_response = assistant.run_stream(question)
 
     with st.chat_message("assistant"):
         with st.spinner("Working..."):
             response = ""
             resp_container = st.empty()
-            for delta in assistant.run(question, stream=True):
+            for delta in assistant.run_stream(question):
                 response += delta  # type: ignore
                 resp_container.markdown(response)
 
