@@ -12,11 +12,11 @@ def action_validator(codes):
         with open('outputs/test.yml', 'w') as file:
             file.write(code)
 
-        output = subprocess.run(["action-validator", "outputs/test.yml"], text=True, check=False, capture_output=True).stderr
+        output = subprocess.run(["actionlint", "-format '{{json .}}'", "outputs/test.yml"], text=True, check=False, capture_output=True).stderr
 
         result = {
             "valid": len(output) == 0,
-            "result_output": output,
+            "result_output": json.loads(output),
             "code": code
         }
         results.append(result)

@@ -6,6 +6,7 @@ from menu import menu
 from io import StringIO
 # import evaluate
 import difflib as dl
+import os
 
 from assistant import Assistant
 
@@ -22,57 +23,43 @@ menu()
 
 st.title("🚀 Workflow Explanation")
 
-assistant_explainer = Assistant(
-    model="meta-llama/Meta-Llama-3-70B-Instruct",
-    system_prompt="""
-        You will be given a github actions workflow and you will have to explain what it does. Add enough details so the workflow can be reproduced only from this description.
-        Split your description in these sections if they are present in the workflow: Trigger, Jobs with their steps, Environment variables, Secrets, Cache, Matrix, Services, Timeout and permissions.
-        Use bullet points to describe elements of each section. do not include sections if they are not in the workflow.
-        """,
-    # description="""
-    #     You will be given a github actions workflow and you will have to explain what it does. Add enough details so the workflow can be reproduced only from this description.
-    #     """,
-)
+system_prompt="""
+You will be given a github actions workflow and you will have to explain what it does. Add enough details so the workflow can be reproduced only from this description.
+Split your description in these sections if they are present in the workflow: Trigger, Jobs with their steps, Environment variables, Secrets, Cache, Matrix, Services, Timeout and permissions.
+Use bullet points to describe elements of each section. do not include sections if they are not in the workflow.
+"""
 
-uploaded_files = st.file_uploader("Upload a github actions workflow", type=["yml","yaml"], accept_multiple_files=True)
+workflows = []
 
-for uploaded_file in uploaded_files:
-    for i in range(1):
-        with st.expander(uploaded_file.name + " - " + str(i), expanded=True):
-            stringio = StringIO(uploaded_file.getvalue().decode("utf-8"))
-            content = stringio.getvalue()
-            original_workflow_description = assistant_explainer.run(content)
-            st.write(original_workflow_description)
+for owner in stqdm(os.listdir(env.repository_directories)):
+    for repo_name in os.listdir(env.repository_directories + "/" + owner):
+        directory = env.repository_directories + "/" + owner + "/" + repo_name
+        for workflow_file in os.listdir(directory + "/workflows"):
+            workflows.append({
+                "owner": owner,
+                "repo_name": repo_name,
+                "workflow_file": workflow_file,
+                "directory": directory
+            })
 
-            print(original_workflow_description)
+with st.form("my_form"):
+    submit = st.form_submit_button(label="Submit")
 
-            # assistant_modifier = Assistant(
-            #     llm=model,
-            #     description="You will be given a description of a github actions workflow. Give the best prompt which can be fed to a llm to generate the workflow yaml file Add enough details in the prompt to be able to generate the exact workflow from the description. Answer only with the prompt. Do not say Here's a prompt that can be used to generate the workflow yaml file. Just give the prompt.",
-            #     run_id=None,
-            # )
+if submit:
+    for workflow_infos in stqdm(workflows):
+        if workflow_infos["owner"] != "vercel":
+                continue
+        assistant = Assistant(model="Qwen/Qwen2-72B-Instruct", system_prompt=system_prompt)
 
-            # st.write("## Generated prompt")
+        with st.expander(workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + "/" + workflow_infos["workflow_file"], expanded=True):
+            with open(workflow_infos["directory"] + "/workflows/" + workflow_infos["workflow_file"]) as file:
+                workflow = file.read()
 
-            # generated_prompt = assistant_modifier.run(original_workflow_description, stream=True)
-            # generated_prompt = st.write_stream(generated_prompt)
+            description = assistant.run(workflow)
 
-            # assistant_generator = Assistant(
-            #     llm=model,
-            #     description="You will be given a description of a GitHub Action workflow file. You will have to generate the workflow file based on the description. Answer only with the file code. Do not add any additional information.",
-            #     run_id=None,
-            # )
-
-            # col1, col2 = st.columns(2)
-
-            # with col1:
-            #     st.write("## Generated")
-            #     generated_workflow = assistant_generator.run(original_workflow_description, stream=False)
-            #     st.code(generated_workflow)
-
-            # with col2:
-            #     st.write("## Original")
-            #     st.code(content)
+            os.makedirs(workflow_infos["directory"] + "/detailed_descriptions", exist_ok=True)
+            with open(workflow_infos["directory"] + "/detailed_descriptions/" + workflow_infos["workflow_file"] + ".md", "w") as file:
+                file.write(description)
 
             # # st.write("## Evaluation")
             # # bleu = evaluate.load("bleu")

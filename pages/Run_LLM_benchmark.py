@@ -72,7 +72,7 @@ if submit:
 
         for workflow_infos in stqdm(workflows):
             assistant = Assistant(model=model_params["full name"], system_prompt=system_prompt)
-            if workflow_infos["owner"] != "web-infra-dev":
+            if workflow_infos["owner"] != "vercel":
                 continue
             directory = workflow_infos["directory"]
             workflow_file = workflow_infos["workflow_file"]
@@ -109,7 +109,7 @@ if submit:
                 "description": description,
                 "response": response,
                 "actions similarities": actions_comparison(parsed_original, parsed_workflow),
-                "deepdiff": deepdiff_compare(parsed_original, parsed_workflow),
+                "deepdiff_jobs": deepdiff_compare(parsed_original["jobs"], parsed_workflow["jobs"]),
                 "action-validator results": action_validator(workflow),
                 "LLM-as-a-Judge results": llm_as_a_judge(workflow, description, "Qwen/Qwen2-72B-Instruct"),
             }
