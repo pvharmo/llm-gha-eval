@@ -3,6 +3,7 @@ import json
 import os
 from os.path import isfile, join
 from menu import menu
+import sqlite3
 
 st.set_page_config(
     page_title="Visualize benchmarks",
@@ -15,10 +16,20 @@ menu()
 
 st.title("📊 Visualize benchmarks")
 
-files = [f[:-5] for f in os.listdir("./results") if isfile(join("./results", f)) and f.endswith(".json")]
+con = sqlite3.connect("results/results.db")
+cur = con.cursor()
 
-if len(files) > 0:
-    model_name = st.selectbox("Select a model", files)
+cur.execute("SELECT * FROM runs")
+output = cur.fetchall()
+
+runs = [x[0] for x in output]
+
+model_name = st.selectbox("Select a run", runs)
+
+cur.execute("SELECT * FROM runs")
+output = cur.fetchall()
+
+for model in output[2]:
 
     results = json.loads(open(f"results/{model_name}.json").read())
 

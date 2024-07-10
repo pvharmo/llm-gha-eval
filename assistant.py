@@ -5,6 +5,8 @@ from openai import OpenAI, Stream
 from openai.types.chat.chat_completion_message_param import ChatCompletionMessageParam
 import env
 from pprint import pprint
+import httpx
+import json
 
 import http.client
 
@@ -15,15 +17,11 @@ class Assistant:
         self.description = system_prompt
         self.top_p = 1
         if local:
-            self.client = OpenAI(
-                base_url="http://localhost:11434/v1",
-                api_key="ollama",
-            )
+            self.api_key = "http://localhost:11434/v1"
+            self.base_url = "ollama"
         else:
-            self.client = OpenAI(
-                api_key=env.api_key,
-                base_url=env.base_url,
-            )
+            self.api_key = env.api_key
+            self.base_url = env.base_url
 
         self.messages = messages
 
@@ -41,13 +39,17 @@ class Assistant:
             *self.messages
         ]
 
-        res: Stream = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages, # type: ignore
-            temperature=self.temperature,
-            top_p=self.top_p,
-            max_tokens=8192,
-            stream=True
+        res = httpx.post(
+            self.base_url + "/chat/completions",
+            headers={"Authorization": "bearer " + self.api_key, "Content-Type": "application/json"},
+            json={
+                "model": self.model,
+                "messages": messages,
+                "temperature": self.temperature,
+                "top_p": self.top_p,
+                "stream": True,
+                "max_tokens": 8192
+            }
         )
 
         response = ""
@@ -75,16 +77,20 @@ class Assistant:
             *self.messages
         ]
 
-        res = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages, # type: ignore
-            temperature=self.temperature,
-            top_p=self.top_p,
-            max_tokens=8192,
-            stream=False
+        res = httpx.post(
+            self.base_url + "/chat/completions",
+            headers={"Authorization": "bearer " + self.api_key, "Content-Type": "application/json"},
+            json={
+                "model": self.model,
+                "messages": messages,
+                "temperature": self.temperature,
+                "top_p": self.top_p,
+                "max_tokens": None
+            },
+            timeout = 60
         )
 
-        response = res.choices[0].message.content
+        response = res.json()["choices"][0]["message"]["content"]
 
         self.messages.append({
             "role": "assistant",
@@ -95,3 +101,6 @@ class Assistant:
 
     def get_messages(self):
         return self.messages
+
+    def clear_messages(self):
+        self.messages = []

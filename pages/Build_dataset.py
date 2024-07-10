@@ -8,6 +8,7 @@ import json
 from stqdm import stqdm
 import msgspec
 from github import Auth
+import yaml
 
 from assistant import Assistant
 import env
@@ -24,6 +25,8 @@ menu()
 stqdm.pandas()
 
 st.title("📑 Visualize benchmarks")
+
+count = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
 
 encoder = msgspec.json.Encoder()
 
@@ -49,8 +52,8 @@ def get_repo_data(g: Github, repo_data, container):
 
         st.write(f"Found {len(contents)} workflows")
 
-        if len(contents) <= 2:
-            return
+        # if len(contents) <= 2:
+        #     return
 
         os.makedirs(f"./dataset/repos/{repo_data['name']}/workflows", exist_ok=True)
         os.makedirs(f"./dataset/repos/{repo_data['name']}/configs", exist_ok=True)
@@ -131,8 +134,8 @@ def get_repo_data(g: Github, repo_data, container):
             has_common_element(t.split("/"), ignored_dirs)
             for spec in properties["package_specs"].keys():
                 if spec in t:
-                    file: ContentFile.ContentFile = repo.get_contents(t) # type: ignore
-                    if file.type != "file":
+                    file = repo.get_contents(t)
+                    if isinstance(file, list) or file.type != "file":
                         continue
                     try:
                         with open(f'./dataset/repos/{repo_data["name"]}/configs/{len(properties["package_specs"][spec])}-{spec}', 'w') as f:
@@ -146,7 +149,7 @@ def get_repo_data(g: Github, repo_data, container):
             f.write(msgpack)
 
 def build_dataset(nb_repo):
-    repos = pd.read_csv("./config/results-1500-stars-20-june.csv")
+    repos = pd.read_csv("./config/repos-1-year.csv")
 
     auth = Auth.Token(gh_token)
     g = Github(auth=auth)
@@ -209,5 +212,108 @@ def create_detailed_descriptions():
         with open(directory + "/detailed_descriptions/" + workflow_file + ".md", "w") as file:
             file.write(original_workflow_description)
 
+def create_article_descriptions():
+    workflows = []
+
+    for owner in stqdm(os.listdir(env.repository_directories)):
+        for repo_name in os.listdir(env.repository_directories + "/" + owner):
+            directory = env.repository_directories + "/" + owner + "/" + repo_name
+            for workflow_file in os.listdir(directory + "/workflows"):
+                workflows.append({
+                    "owner": owner,
+                    "repo_name": repo_name,
+                    "workflow_file": workflow_file,
+                    "directory": directory
+                })
+
+    for workflow_infos in stqdm(workflows):
+        directory = workflow_infos["directory"]
+        workflow_file = workflow_infos["workflow_file"]
+
+        with open(directory + "/workflows/" + workflow_file) as file:
+            content = file.read()
+
+        try:
+            workflow = yaml.safe_load(content)
+        except:
+            continue
+
+        try:
+            if "name" not in workflow.keys() or "jobs" not in workflow.keys() or os.path.exists(directory + "/detailed_descriptions/" + workflow_file + ".md"):
+                continue
+        except:
+            continue
+
+        valid_workflow = True
+
+        for job in workflow["jobs"]:
+            if "steps" not in workflow["jobs"][job].keys():
+                valid_workflow = False
+                break
+            for step in workflow["jobs"][job]["steps"]:
+                if "name" not in step.keys():
+                    valid_workflow = False
+                    break
+                    break
+
+        if not valid_workflow:
+            continue
+
+        st.write("# " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + " - " + workflow_file)
+        with open(directory + "/properties.json", 'r') as file:
+            meta_data = json.load(file)
+
+        languages = meta_data['languages']
+
+        main_language = max(languages, key=languages.get)
+        description = f'Generate a GitHub Workflow named {workflow["name"]} for a GitHub repository whose programming language is {main_language}.'
+        job_ids = f' The workflow has {count[len(workflow["jobs"])]} job{"s" if len(workflow["jobs"]) > 1 else ""}.'
+        step_names = ""
+        for i, job_name in enumerate(workflow["jobs"]):
+            job = workflow["jobs"][job_name]
+            job_ids += f' The job id of the {i+1}{"st" if i == 0 else "nd" if i == 1 else "rd" if i == 2 else "th"} job is "{job_name}".'
+
+            step_names = f' The job {job_name} has {count[len(job["steps"])]} step{"s" if len(job["steps"]) > 1 else ""}.'
+            for i, step in enumerate(job["steps"]):
+                step_names += f' The {i+1}{"st" if i == 0 else "nd" if i == 1 else "rd" if i == 2 else "th"} step is named "{step["name"]}".'
+
+        st.write(description)
+        st.write(job_ids)
+        st.write(step_names)
+
+        # assistant_explainer_workflow_level = Assistant(
+        #     model="Qwen/Qwen2-72B-Instruct",
+        #     system_prompt="""
+        #         Tell me on which events it should trigger. Here is an example of the expected answer:
+        #             This workflow will be triggered by an event: The workflow would run whenever there is a push event to a branch named “main”.
+        #         """
+        # )
+
+        # assistant_explainer_jobs_infos = Assistant(
+        #     model="Qwen/Qwen2-72B-Instruct",
+        #     system_prompt="""
+        #         Tell me The informations about each jobs except for the steps and the name of the job. Here is an example of the expected answer:
+        #             The job “build” runs on ubuntu-latest runner.
+        #         """
+        # )
+
+        # assistant_explainer_steps_infos = Assistant(
+        #     model="Qwen/Qwen2-72B-Instruct",
+        #     system_prompt="""
+        #         Tell me the name of each steps for each jobs. Here is an example of the expected answer:
+        #             The job “build” has 5 steps. The 1st step is named “Checkout sources”. The 2nd step is named “Install
+        #             stable toolchain”. The 3rd step is named “Run cargo build”. The 4th step is named “Prepare docs
+        #             folder”. The 5th step is named “Deploy documentation branch”.
+        #         """
+        # )
+
+        # original_workflow_description = assistant_explainer_p1.run(content)
+
+        # if not os.path.exists(directory + "/detailed_descriptions"):
+        #     os.makedirs(directory + "/detailed_descriptions")
+
+        # with open(directory + "/detailed_descriptions/" + workflow_file + ".md", "w") as file:
+        #     file.write(original_workflow_description)
 
 st.button("Create detailed descriptions", on_click=lambda: create_detailed_descriptions())
+st.button("Create article descriptions", on_click=lambda: create_article_descriptions())

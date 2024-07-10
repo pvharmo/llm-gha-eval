@@ -7,6 +7,8 @@ from stqdm import stqdm
 from menu import menu
 from pathlib import Path
 import yaml
+import sqlite3
+import time
 
 from assistant import Assistant
 
@@ -23,6 +25,9 @@ st.set_page_config(
 menu()
 
 st.title("🚀 Run LLM benchmarks")
+
+con = sqlite3.connect("results/gha_llm_benchmark.db")
+cur = con.cursor()
 
 system_prompts_attributes = json.loads(open("./config/system_prompts.json").read())
 prompts = json.loads(open("./config/prompts.json").read())
@@ -62,64 +67,90 @@ for owner in stqdm(os.listdir(env.repository_directories)):
                 "directory": directory
             })
 
+def save_results(results):
+    cur.execute("""
+        INSERT INTO results (
+            run_id, owner, repository, name, model, description, response, workflow, error_type, error_text
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, results)
+    con.commit()
+
 st.write("## Benchmarks running")
-if submit:
+if submit and len(models.loc[models["run"]]) > 0:
+    cur.execute("INSERT INTO runs (started_at, models) VALUES (?, ?)", (int(time.time()), models.loc[models["run"]].to_json()))
+    run_id = cur.lastrowid
+    con.commit()
+
+    st.write(f"Run ID: {run_id}")
     for i, model_params in models.loc[models["run"]].iterrows():
         st.write(f"- Running {model_params['name']}")
 
-        results = []
         yaml_parsing_failed = []
 
         for workflow_infos in stqdm(workflows):
-            assistant = Assistant(model=model_params["full name"], system_prompt=system_prompt)
-            if workflow_infos["owner"] != "vercel":
-                continue
-            directory = workflow_infos["directory"]
-            workflow_file = workflow_infos["workflow_file"]
+            with st.expander(f"{workflow_infos['owner']}/{workflow_infos['repo_name']}/{workflow_infos['workflow_file']}"):
+                assistant = Assistant(model=model_params["full name"], system_prompt=system_prompt)
+                assistant.clear_messages()
+                st.write("messages count : " + str(len(assistant.get_messages())))
+                # if not (workflow_infos["owner"] == "web-infra-dev" and workflow_infos["workflow_file"] == "issue-close-require.yml"):
+                if workflow_infos["owner"] != "web-infra-dev":
+                    continue
+                directory = workflow_infos["directory"]
+                workflow_file = workflow_infos["workflow_file"]
 
-            with open(directory + "/detailed_descriptions/" + workflow_file + ".md") as file:
-                description = file.read()
+                st.write("reading description...")
+                with open(directory + "/detailed_descriptions/" + workflow_file + ".md") as file:
+                    description = file.read()
 
-            with open(directory + "/workflows/" + workflow_file) as file:
-                original = file.read()
+                st.write("reading workflow...")
+                with open(directory + "/workflows/" + workflow_file) as file:
+                    original = file.read()
 
-            response = assistant.run(description)
+                st.write("running agent...")
+                try:
+                    response = assistant.run(description)
+                    st.write("### Response")
+                    st.write(response)
+                except Exception as e:
+                    st.write("### Error receiving a response")
+                    st.write(str(e))
+                    save_results((
+                        run_id,
+                        workflow_infos["owner"],
+                        workflow_infos["repo_name"],
+                        workflow_infos["workflow_file"],
+                        model_params['name'],
+                        description,
+                        None, # response
+                        None, # workflow
+                        "Workflow generation failed", # error_type
+                        str(e) # error_text
+                    ))
+                    continue
 
-            if "```yaml" in response:
-                workflow = regex.search(r'(?<=```yaml)([\s\S]*?)(?=```)', response)
-                workflow = workflow.group(0) if workflow else response
-            elif "```" in response:
-                workflow = regex.search(r'(?<=```)([\s\S]*?)(?=```)', response)
-                workflow = workflow.group(0) if workflow else response
-            else:
-                workflow = response
-            try:
-                parsed_workflow = yaml.safe_load(workflow)
-                parsed_original = yaml.safe_load(original)
-            except yaml.YAMLError as e:
-                yaml_parsing_failed.append({
-                    "response": response,
-                    "workflow": workflow,
-                    "description": description,
-                    "error": str(e)
-                })
-                continue
+                if "```yaml" in response:
+                    workflow = regex.search(r'(?<=```yaml)([\s\S]*?)(?=```)', response)
+                    workflow = workflow.group(0) if workflow else response
+                elif "```" in response:
+                    workflow = regex.search(r'(?<=```)([\s\S]*?)(?=```)', response)
+                    workflow = workflow.group(0) if workflow else response
+                else:
+                    workflow = response
 
-            result = {
-                "description": description,
-                "response": response,
-                "actions similarities": actions_comparison(parsed_original, parsed_workflow),
-                "deepdiff_jobs": deepdiff_compare(parsed_original["jobs"], parsed_workflow["jobs"]),
-                "action-validator results": action_validator(workflow),
-                "LLM-as-a-Judge results": llm_as_a_judge(workflow, description, "Qwen/Qwen2-72B-Instruct"),
-            }
+                st.write("### Workflow")
+                st.code(workflow, language="yaml")
 
-            results.append(result)
-
-        with open(f'results/{model_params["name"]}.json', "w") as file:
-            json.dump({
-                "results": results,
-                "yaml parsing failed": yaml_parsing_failed,
-                "system_prompt": system_prompt,
-                "model": model_params["full name"]
-            }, file)
+                st.write("Saving results...")
+                save_results((
+                    run_id,
+                    workflow_infos["owner"],
+                    workflow_infos["repo_name"],
+                    workflow_infos["workflow_file"],
+                    model_params['name'],
+                    description,
+                    response,
+                    workflow,
+                    None, # error_type
+                    None # error_text
+                ))
+                st.write("Saved results")

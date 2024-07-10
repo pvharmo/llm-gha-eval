@@ -6,27 +6,32 @@ from deepdiff import DeepDiff
 import pprint
 import json
 
-def action_validator(codes):
+def action_validator(workflow):
     results = []
-    for code in codes:
-        with open('outputs/test.yml', 'w') as file:
-            file.write(code)
+    with open('outputs/test.yml', 'w') as file:
+        file.write(workflow)
 
-        output = subprocess.run(["actionlint", "-format '{{json .}}'", "outputs/test.yml"], text=True, check=False, capture_output=True).stderr
+    output = subprocess.run(["actionlint", "-format", "'{{json .}}'", "outputs/test.yml"], text=True, capture_output=True).stdout
 
-        result = {
-            "valid": len(output) == 0,
-            "result_output": json.loads(output),
-            "code": code
-        }
-        results.append(result)
+    json_output = json.loads(output[1:-1])
+
+    result = {
+        "valid": len(json_output) == 0,
+        "output": json_output,
+    }
+    results.append(result)
 
     return results
 
 def deepdiff_compare(original, generated):
     # For some reason the yaml parser replaces the key "on" by True
-    diff_events = DeepDiff(original[True], generated[True], ignore_order=True, verbose_level=2, get_deep_distance=True)
-    diff_jobs = DeepDiff(original["jobs"], generated["jobs"], ignore_order=True, verbose_level=2, get_deep_distance=True)
+    generated_events = generated[True] if True in generated else yaml.safe_load("{}")
+    generated_jobs = generated["jobs"] if "jobs" in generated else yaml.safe_load("{}")
+    original_events = original[True] if True in original else yaml.safe_load("{}")
+    original_jobs = original["jobs"] if "jobs" in original else yaml.safe_load("{}")
+
+    diff_events = DeepDiff(original_events, generated_events, ignore_order=True, verbose_level=2, get_deep_distance=True)
+    diff_jobs = DeepDiff(original_jobs, generated_jobs, ignore_order=True, verbose_level=2, get_deep_distance=True)
 
     return {
         "events": {
@@ -101,25 +106,29 @@ def actions_comparison(original, generated):
 
 
     for job in original["jobs"]:
-        for step in original["jobs"][job]["steps"]:
-            nb_steps_original += 1
-            if "uses" in step:
-                original_actions.append(step["uses"])
+        if "steps" in original["jobs"][job]:
+            for step in original["jobs"][job]["steps"]:
+                nb_steps_original += 1
+                if "uses" in step:
+                    original_actions.append(step["uses"])
 
 
     for job in generated["jobs"]:
-        for step in generated["jobs"][job]["steps"]:
-            nb_steps_generated += 1
-            if "uses" in step:
-                generated_actions.append(step["uses"])
+        if "steps" in generated["jobs"][job]:
+            for step in generated["jobs"][job]["steps"]:
+                nb_steps_generated += 1
+                if "uses" in step:
+                    generated_actions.append(step["uses"])
 
-    jaccard_index = len(set(original_actions).intersection(generated_actions)) / len(set(original_actions).union(generated_actions))
-    edit_distance_value = edit_distance(original_actions, generated_actions, len(original_actions), len(generated_actions))
+    union = len(set(original_actions).union(generated_actions))
+    jaccard_index = len(set(original_actions).intersection(generated_actions)) / union if union > 0 else 0
+    # edit_distance_value = edit_distance(original_actions, generated_actions, len(original_actions), len(generated_actions))
 
     return {
         "jaccard_index": jaccard_index,
-        "edit_distance": edit_distance_value,
+        # "edit_distance": edit_distance_value,
         "diff_nb_steps": nb_steps_original - nb_steps_generated,
+        "ration_nb_steps": nb_steps_generated / nb_steps_original
     }
 
 # Recusive implementation of the edit distance algorithm
