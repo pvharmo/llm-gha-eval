@@ -13,7 +13,10 @@ import time
 from assistant import Assistant
 
 import env
-from utils import action_validator, llm_as_a_judge, deepdiff_compare, actions_comparison
+from utils.action_validation import action_validator
+from utils.action_comparison import actions_comparison
+from utils.deepdiff import deepdiff_compare
+from utils.llm_judge import llm_as_a_judge
 
 st.set_page_config(
     page_title="Run LLM benchmarks",
