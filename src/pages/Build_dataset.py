@@ -237,12 +237,13 @@ def create_article_descriptions():
         for repo_name in os.listdir(env.repository_directories + "/" + owner):
             directory = env.repository_directories + "/" + owner + "/" + repo_name
             for workflow_file in os.listdir(directory + "/workflows"):
-                workflows.append({
-                    "owner": owner,
-                    "repo_name": repo_name,
-                    "workflow_file": workflow_file,
-                    "directory": directory
-                })
+                if workflow_file.endswith(".yml") or workflow_file.endswith(".yaml"):
+                    workflows.append({
+                        "owner": owner,
+                        "repo_name": repo_name,
+                        "workflow_file": workflow_file,
+                        "directory": directory
+                    })
 
     nb_workflows = 0
     for workflow_infos in stqdm(workflows):

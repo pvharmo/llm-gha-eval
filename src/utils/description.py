@@ -5,16 +5,17 @@ from utils.parse_jobs import parse_workflow_jobs
 import streamlit as st
 import yaml
 import json
+import os
 
 def prepare_workflow(workflow_infos):
     directory = workflow_infos["directory"]
     workflow_file = workflow_infos["workflow_file"]
 
     with open(directory + "/workflows/" + workflow_file) as file:
-        content = file.read()
-
-    with open("./sandbox/test.yml") as file:
         yaml_content = file.read()
+
+    # with open("./sandbox/test.yml") as file:
+    #     yaml_content = file.read()
 
     try:
         workflow = yaml.safe_load(yaml_content)
@@ -36,22 +37,20 @@ def prepare_workflow(workflow_infos):
     except:
         return
 
+    print("generating description for " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + "/" + workflow_file)
     description = generate_description(workflow, metadata)
 
     if description is None:
         return
 
-    st.write("# " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + " - " + workflow_file)
+    print("# " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + " - " + workflow_file)
+
+    if not os.path.exists(directory + "/generated_descriptions"):
+        os.makedirs(directory + "/generated_descriptions")
 
     for key, value in description.items():
-        st.write("### " + key)
-        st.write("<p>" + value + "</p>", unsafe_allow_html=True)
-
-    # if not os.path.exists(directory + "/detailed_descriptions"):
-    #     os.makedirs(directory + "/detailed_descriptions")
-
-    # with open(directory + "/detailed_descriptions/" + workflow_file + ".md", "w") as file:
-    #     file.write(original_workflow_description)
+        with open(directory + "/generated_descriptions/" + key + "_" + workflow_file + ".txt", "w") as file:
+            file.write(value)
 
 def generate_description(workflow: dict, metadata):
     valid_workflow = True

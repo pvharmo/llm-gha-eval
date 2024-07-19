@@ -16,11 +16,13 @@ def parse_workflow(workflow: dict):
     description = " Additionally, ".join(trigger_descriptions)
     description += parse_env_variables(env)
 
-    permissions = workflow.get('permissions', {})
-    description += parse_permissions(permissions)
+    permissions = workflow.get('permissions', None)
+    if permissions is not None:
+        description += parse_permissions(permissions)
 
-    concurrency = workflow.get('concurrency', {})
-    description += parse_concurrency(concurrency)
+    concurrency = workflow.get('concurrency', None)
+    if concurrency is not None:
+        description += parse_concurrency(concurrency)
 
     return description
 
@@ -30,6 +32,8 @@ def parse_trigger(trigger):
     elif isinstance(trigger, dict):
         event_type = list(trigger.keys())[0]
         event_config = trigger[event_type]
+        if event_config is None:
+            return f"The workflow would run on any {event_type} event."
         if event_type == "push":
             return parse_push_event(event_config)
         elif event_type == "pull_request":
@@ -151,12 +155,12 @@ def parse_workflow_dispatch_event(event_config):
 def parse_path_conditions(event_config, also: bool):
     path_conditions = []
     if "paths" in event_config:
-        path_conditions.append(f" It {"also" if also else ""} triggers on changes that are made to files matching {format_list(event_config['paths'])}")
+        path_conditions.append(f" It {'also' if also else ''} triggers on changes that are made to files matching {format_list(event_config['paths'])}")
     if "paths-ignore" in event_config:
         if "paths" in event_config:
             path_conditions.append(f"ignoring changes to files matching {format_list(event_config['paths-ignore'])}")
         else:
-            path_conditions.append(f" It {"also" if also else ""} triggers on changes that are made to any files except those matching {format_list(event_config['paths-ignore'])}")
+            path_conditions.append(f" It {'also' if also else ''} triggers on changes that are made to any files except those matching {format_list(event_config['paths-ignore'])}")
 
     return " and ".join(path_conditions)
 

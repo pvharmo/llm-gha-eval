@@ -1,4 +1,3 @@
-import streamlit as st
 import sqlite3
 
 con = sqlite3.connect("results/gha_llm_benchmark.db")
@@ -38,10 +37,8 @@ cur.execute("""
         deepdiff JSON,
         lint JSON,
         llm_as_a_judge JSON,
-        error_type TEXT,
-        error_text TEXT,
+        errors JSON,
         FOREIGN KEY(prediction_id) REFERENCES predictions(id)
     )"""
 )
 
-st.switch_page("pages/Run_LLM_benchmark.py")

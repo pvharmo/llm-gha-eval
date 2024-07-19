@@ -1,3 +1,8 @@
+import yaml
+# import nltk
+# from nltk.tokenize import word_tokenize
+from nltk.translate.bleu_score import sentence_bleu
+
 def actions_comparison(original, generated):
     nb_steps_original = 0
     nb_steps_generated = 0
@@ -29,7 +34,8 @@ def actions_comparison(original, generated):
         "jaccard_index": jaccard_index,
         # "edit_distance": edit_distance_value,
         "diff_nb_steps": nb_steps_original - nb_steps_generated,
-        "ration_nb_steps": nb_steps_generated / nb_steps_original
+        "ration_nb_steps": nb_steps_generated / nb_steps_original,
+        "bleu_score": bleu_score(yaml.dump(original), yaml.dump(generated))
     }
 
 # Recusive implementation of the edit distance algorithm (it is very slow)
@@ -48,3 +54,19 @@ def edit_distance(arr1, arr2, m, n):
         edit_distance(arr1, arr2, m-1, n),    # Remove
         edit_distance(arr1, arr2, m-1, n-1)    # Replace
     )
+
+def bleu_score(reference, candidate):
+    # # Download the necessary NLTK data (if not already downloaded)
+    # try:
+    #     nltk.data.find('tokenizers/punkt')
+    # except LookupError:
+    #     nltk.download('punkt')
+
+    # # Tokenize the reference and candidate strings
+    # reference_tokens = word_tokenize(reference)
+    # candidate_tokens = word_tokenize(candidate)
+
+    # Calculate BLEU score
+    score = sentence_bleu([reference.split(" ")], candidate.split(" "))
+
+    return score
