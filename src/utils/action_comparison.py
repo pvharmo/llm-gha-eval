@@ -18,7 +18,7 @@ def actions_comparison(original, generated):
                 if "uses" in step:
                     original_actions.append(step["uses"])
 
-
+    print(generated)
     for job in generated["jobs"]:
         if "steps" in generated["jobs"][job]:
             for step in generated["jobs"][job]["steps"]:
@@ -35,7 +35,6 @@ def actions_comparison(original, generated):
         # "edit_distance": edit_distance_value,
         "diff_nb_steps": nb_steps_original - nb_steps_generated,
         "ration_nb_steps": nb_steps_generated / nb_steps_original,
-        "bleu_score": bleu_score(yaml.dump(original), yaml.dump(generated))
     }
 
 # Recusive implementation of the edit distance algorithm (it is very slow)
@@ -55,7 +54,14 @@ def edit_distance(arr1, arr2, m, n):
         edit_distance(arr1, arr2, m-1, n-1)    # Replace
     )
 
+def workflows_comparison(original, generated):
+    return {
+        "bleu_score": bleu_score(original, generated)
+    }
+
 def bleu_score(reference, candidate):
+    if candidate is None:
+        return 0
     # # Download the necessary NLTK data (if not already downloaded)
     # try:
     #     nltk.data.find('tokenizers/punkt')

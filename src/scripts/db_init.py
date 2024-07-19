@@ -29,10 +29,13 @@ cur.execute("""
     )"""
 )
 
+# cur.execute("DROP TABLE IF EXISTS results")
+
 cur.execute("""
     CREATE TABLE IF NOT EXISTS results(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         prediction_id INTEGER NOT NULL,
+        workflows_comparison JSON,
         actions_comparison JSON,
         deepdiff JSON,
         lint JSON,

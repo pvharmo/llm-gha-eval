@@ -53,11 +53,11 @@ def prepare_workflow(workflow_infos):
             file.write(value)
 
 def generate_description(workflow: dict, metadata):
-    valid_workflow = True
 
     if not isinstance(workflow, dict) or "name" not in workflow.keys() or "jobs" not in workflow.keys():
-        return
+        return None
 
+    valid_workflow = True
     for job in workflow["jobs"]:
         if "steps" not in workflow["jobs"][job].keys():
             valid_workflow = False
@@ -66,10 +66,10 @@ def generate_description(workflow: dict, metadata):
             if "name" not in step.keys():
                 valid_workflow = False
                 break
-                break
 
     if not valid_workflow:
-        return
+        print("Workflow does not have names on all steps")
+        return None
 
     languages = metadata['languages']
 

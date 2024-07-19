@@ -2,6 +2,8 @@ import json
 import subprocess
 
 def action_validator(workflow):
+    if workflow is None:
+        return None
     results = []
     with open('outputs/test.yml', 'w') as file:
         file.write(workflow)
