@@ -37,20 +37,23 @@ def prepare_workflow(workflow_infos):
     except:
         return
 
-    print("generating description for " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + "/" + workflow_file)
-    description = generate_description(workflow, metadata)
+    try:
+        print("generating description for " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + "/" + workflow_file)
+        description = generate_description(workflow, metadata)
 
-    if description is None:
-        return
+        if description is None:
+            return
 
-    print("# " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + " - " + workflow_file)
+        print("# " + workflow_infos["owner"] + "/" + workflow_infos["repo_name"] + " - " + workflow_file)
 
-    if not os.path.exists(directory + "/generated_descriptions"):
-        os.makedirs(directory + "/generated_descriptions")
+        if not os.path.exists(directory + "/generated_descriptions"):
+            os.makedirs(directory + "/generated_descriptions")
 
-    for key, value in description.items():
-        with open(directory + "/generated_descriptions/" + key + "_" + workflow_file + ".txt", "w") as file:
-            file.write(value)
+        for key, value in description.items():
+            with open(directory + "/generated_descriptions/" + key + "_" + workflow_file + ".txt", "w") as file:
+                file.write(value)
+    except Exception as e:
+        print(e)
 
 def generate_description(workflow: dict, metadata):
 
@@ -63,7 +66,9 @@ def generate_description(workflow: dict, metadata):
             valid_workflow = False
             break
         for step in workflow["jobs"][job]["steps"]:
-            if "name" not in step.keys():
+            has_name = "name" in step.keys()
+            is_checkout_action = "uses" in step.keys() and step["uses"].startswith("actions/checkout@")
+            if not (has_name or is_checkout_action):
                 valid_workflow = False
                 break
 

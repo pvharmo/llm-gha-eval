@@ -54,21 +54,27 @@ def parse_trigger(trigger):
 def parse_push_event(event_config):
     conditions = ""
     if "branches" in event_config:
-        conditions += f"branches {format_list(event_config['branches'])}"
+        if event_config["branches"] is None:
+            conditions += "any branches"
+        else:
+            conditions += f"branches {format_list(event_config['branches'])}"
     if "tags" in event_config:
         if "branches" in event_config:
             conditions += " and "
-        conditions += f"tags {format_list(event_config['tags'])}"
+        if event_config["tags"] is None:
+            conditions += "any tags"
+        else:
+            conditions += f"tags {format_list(event_config['tags'])}"
     if "branches" not in event_config and "branches-ignore" in event_config:
         conditions += " any branches"
     if "tags" not in event_config and "tags-ignore" in event_config:
         if "branches" in event_config:
             conditions += " and"
         conditions += " any tags"
-    if "branches-ignore" in event_config:
+    if "branches-ignore" in event_config and event_config["branches-ignore"] is not None:
         ignored_branches = event_config["branches-ignore"]
         conditions += f" but ignores branches {format_list(ignored_branches)}"
-    if "tags-ignore" in event_config:
+    if "tags-ignore" in event_config and event_config["tags-ignore"] is not None:
         if "branches-ignore" in event_config:
             conditions += " and"
         else:
@@ -181,6 +187,8 @@ def parse_permissions(permissions: Union[str, Dict[str, str]]) -> str:
         return f" The workflow sets overall permissions to '{permissions}'."
     elif isinstance(permissions, dict):
         perm_list = [f"'{key}': {value}" for key, value in permissions.items()]
+        if len(perm_list) == 0:
+            return f" The workflow sets overall permissions to default."
         if len(perm_list) == 1:
             return f" The workflow sets the following permission: {perm_list[0]}."
         elif len(perm_list) == 2:

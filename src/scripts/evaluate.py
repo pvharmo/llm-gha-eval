@@ -20,6 +20,11 @@ from utils.action_comparison import actions_comparison, workflows_comparison
 from utils.deepdiff import deepdiff_compare
 from utils.llm_judge import llm_as_a_judge
 
+try:
+    run_id = int(sys.argv[1])
+except:
+    print("Please provide a run_id as an argument")
+
 con = sqlite3.connect("results/gha_llm_benchmark.db")
 con.row_factory = sqlite3.Row
 cur = con.cursor()
@@ -31,8 +36,6 @@ def save_results(results):
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
     """, results)
     con.commit()
-
-run_id = 15
 
 cur.execute("SELECT * FROM predictions WHERE run_id = ?", (run_id,))
 predictions = cur.fetchall()
@@ -66,7 +69,7 @@ for prediction in predictions:
     #         "type": "Judge failed",
     #         "error": str(e)
     #     })
-    
+
     workflow_validation = json.dumps(action_validator(prediction["workflow"]))
 
     workflows_comparison_result = json.dumps(workflows_comparison(original, prediction["workflow"]))

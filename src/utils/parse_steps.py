@@ -12,7 +12,11 @@ def step_names(workflow):
             step_names += f' The step is named "{job["steps"][0]["name"]}".'
         else:
             for i, step in enumerate(job["steps"]):
-                step_names += f' The {i+1}{"st" if i == 0 else "nd" if i == 1 else "rd" if i == 2 else "th"} step is named "{step["name"]}".'
+                if "name" in step:
+                    step_names += f' The {i+1}{"st" if i == 0 else "nd" if i == 1 else "rd" if i == 2 else "th"} step is named "{step["name"]}".'
+                elif "uses" in step and step["uses"].startswith("actions/checkout@"):
+                    step_names += f' The {i+1}{"st" if i == 0 else "nd" if i == 1 else "rd" if i == 2 else "th"} step is a "Checkout code".'
+
     return step_names
 
 # def step_names_with_details(workflow):
