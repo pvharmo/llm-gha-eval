@@ -34,6 +34,7 @@ cur.execute("""
 cur.execute("""
     CREATE TABLE IF NOT EXISTS results(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        eval_id INTEGER NOT NULL,
         prediction_id INTEGER NOT NULL,
         workflows_comparison JSON,
         actions_comparison JSON,

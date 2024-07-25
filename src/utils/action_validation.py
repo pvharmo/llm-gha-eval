@@ -4,7 +4,6 @@ import subprocess
 def action_validator(workflow):
     if workflow is None:
         return None
-    results = []
     with open('outputs/test.yml', 'w') as file:
         file.write(workflow)
 
@@ -12,10 +11,7 @@ def action_validator(workflow):
 
     json_output = json.loads(output[1:-1])
 
-    result = {
+    return {
         "valid": len(json_output) == 0,
         "output": json_output,
     }
-    results.append(result)
-
-    return results
