@@ -18,7 +18,6 @@ def actions_comparison(original, generated):
                 if "uses" in step:
                     original_actions.append(step["uses"])
 
-    print(generated)
     for job in generated["jobs"]:
         if "steps" in generated["jobs"][job]:
             for step in generated["jobs"][job]["steps"]:
@@ -54,10 +53,10 @@ def edit_distance(arr1, arr2, m, n):
         edit_distance(arr1, arr2, m-1, n-1)    # Replace
     )
 
-def workflows_comparison(original, generated):
-    return {
-        "bleu_score": bleu_score(original, generated)
-    }
+# def workflows_comparison(original, generated):
+#     return {
+#         "bleu_score": bleu_score(original, generated)
+#     }
 
 def bleu_score(reference, candidate):
     if candidate is None:

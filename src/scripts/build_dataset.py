@@ -1,5 +1,7 @@
 import sys
 import os
+import datetime
+from time import sleep
 
 # Get the current script's directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,6 +27,9 @@ from assistant import Assistant
 import env
 from utils.description import generate_description, prepare_workflow
 
+start_time = datetime.datetime.now()
+print(f"Started at {start_time}")
+
 tqdm.pandas()
 
 encoder = msgspec.json.Encoder()
@@ -47,22 +52,16 @@ def get_repo_data(g: Github, repo_data):
                 f.write(f"{repo_data['name']}\n")
             return
 
+        sleep(4)
         repo = g.get_repo(repo_data["name"])
-
-        print(f"Processing {repo_data['name']}")
 
         try:
             contents: list[ContentFile.ContentFile] = repo.get_contents("/.github/workflows") # type: ignore
         except UnknownObjectException as e:
-            print("No workflows found")
+            print(f"Error processing {repo_data['name']}: UnknownObjectException")
             with open(f'./config/repos-1-year_repos_done.csv', "+a") as f:
                 f.write(f"{repo_data['name']}\n")
             return
-
-        print(f"Found {len(contents)} workflows")
-
-        # if len(contents) <= 2:
-        #     return
 
         os.makedirs(f"./dataset/repos/{repo_data['name']}/workflows", exist_ok=True)
         os.makedirs(f"./dataset/repos/{repo_data['name']}/configs", exist_ok=True)
@@ -173,5 +172,10 @@ def build_dataset(nb_repo):
     g.close()
 
 
-nb_repo = 500
+nb_repo = 2500
 build_dataset(nb_repo)
+
+# print current time
+print(f"Ended at ", datetime.datetime.now())
+# print time taken
+print("Time taken: ", datetime.datetime.now() - start_time)

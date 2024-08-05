@@ -7,27 +7,26 @@ import pandas as pd
 try:
     eval_id = int(sys.argv[1])
 except:
-    print("Please provide a eval_id as an argument")
+    raise Exception("Please provide a eval_id as an argument")
 
 con = sqlite3.connect("results/gha_llm_benchmark.db")
 con.row_factory = sqlite3.Row
 cur = con.cursor()
 
 cur.execute("""
-SELECT 
+SELECT
     p.description_id,
-    AVG(CAST(JSON_EXTRACT(r.workflows_comparison, '$.bleu_score') AS FLOAT)) AS avg_bleu_score,
+    AVG(CAST(score AS FLOAT)) AS avg_bleu_score,
     COUNT(*) AS row_count
-FROM 
+FROM
     predictions p
-JOIN 
-    results r ON p.id = r.prediction_id
-WHERE 
+JOIN
+    bleu_scores r ON p.id = r.prediction_id
+WHERE
     p.description_id IS NOT NULL
     and r.eval_id = ?
-    AND JSON_VALID(r.workflows_comparison)
-    AND JSON_EXTRACT(r.workflows_comparison, '$.bleu_score') IS NOT NULL
-GROUP BY 
+    AND score IS NOT NULL
+GROUP BY
     p.description_id
 """, (eval_id,))
 bleu_score = cur.fetchall()
@@ -37,42 +36,42 @@ for i in bleu_score:
 
 cur.execute("""
 WITH total AS (
-    SELECT 
+    SELECT
         p.description_id,
         COUNT(*) AS row_count
-    FROM 
+    FROM
         predictions p
-    JOIN 
-        results r ON p.id = r.prediction_id
+    JOIN
+        lints r ON p.id = r.prediction_id
   where r.eval_id = ?
     GROUP BY description_id
 ),
 filtered_predictions AS (
-    SELECT 
+    SELECT
         p.description_id,
         COUNT(*) AS row_count
-    FROM 
+    FROM
         predictions p
-    JOIN 
-        results r ON p.id = r.prediction_id
-    WHERE 
+    JOIN
+        lints r ON p.id = r.prediction_id
+    WHERE
         r.eval_id = ? AND
         NOT EXISTS (
             SELECT 1
-            FROM JSON_EACH(JSON_EXTRACT(lint, '$[0].output'))
+            FROM JSON_EACH(JSON_EXTRACT(lint, '$.output'))
             WHERE JSON_EXTRACT(value, '$.kind') = 'syntax-check'
         )
-    GROUP BY 
+    GROUP BY
         p.description_id
 )
-SELECT 
+SELECT
     fp.description_id,
     fp.row_count,
     t.row_count,
     (fp.row_count * 1.0) / (t.row_count * 1.0) AS ratio
-FROM 
+FROM
     filtered_predictions fp
-JOIN 
+JOIN
     total t ON fp.description_id = t.description_id;
 """, (eval_id,eval_id))
 accuracy_without_versions_validation = cur.fetchall()
@@ -82,36 +81,36 @@ for i in accuracy_without_versions_validation:
 
 cur.execute("""
 WITH total AS (
-    SELECT 
+    SELECT
         p.description_id,
         COUNT(*) AS row_count
-    FROM 
+    FROM
         predictions p
-    JOIN 
-        results r ON p.id = r.prediction_id
+    JOIN
+        lints r ON p.id = r.prediction_id
   where r.eval_id = ?
     GROUP BY description_id
 ),
 filtered_predictions AS (
-    SELECT 
+    SELECT
         p.description_id,
         COUNT(*) AS row_count
-    FROM 
+    FROM
         predictions p
-    JOIN 
-        results r ON p.id = r.prediction_id
-    WHERE 
+    JOIN
+        lints r ON p.id = r.prediction_id
+    WHERE
         r.eval_id = ? AND
-        JSON_EXTRACT(lint, '$[0].valid') = 1
-    GROUP BY 
+        JSON_EXTRACT(lint, '$.valid') = 1
+    GROUP BY
         p.description_id
 )
-SELECT 
+SELECT
     fp.description_id,
     (fp.row_count * 1.0) / (t.row_count * 1.0) AS ratio
-FROM 
+FROM
     filtered_predictions fp
-JOIN 
+JOIN
     total t ON fp.description_id = t.description_id;
 """, (eval_id,eval_id))
 accuracy_with_versions_validation = cur.fetchall()
@@ -120,18 +119,20 @@ for i in accuracy_with_versions_validation:
     print(i[0], i[1])
 
 cur.execute("""
-SELECT 
-    p.workflow, r.lint, r.workflows_comparison, p.description, p.description_id
-FROM 
+SELECT
+    p.workflow, r.lint, b.score, p.description, p.description_id
+FROM
     predictions p
-JOIN 
-    results r ON p.id = r.prediction_id
-WHERE 
+JOIN
+    lints r ON p.id = r.prediction_id
+JOIN
+    bleu_scores b ON p.id = b.prediction_id
+WHERE
     p.description_id IS NOT NULL
-    and r.eval_id = ?
-    AND JSON_VALID(r.workflows_comparison)
-    AND JSON_EXTRACT(r.workflows_comparison, '$.bleu_score') IS NOT NULL
-""", (eval_id,))
+    AND r.eval_id = ?
+    AND b.eval_id = ?
+    AND b.score IS NOT NULL
+""", (eval_id,eval_id))
 results = cur.fetchall()
 
 kind = []
@@ -139,23 +140,23 @@ kind = []
 validity = {
     "p1": {
         "valid": 0,
-        "invalid": 0
+        "total": 0
     },
     "p2": {
         "valid": 0,
-        "invalid": 0
+        "total": 0
     },
     "p3": {
         "valid": 0,
-        "invalid": 0
+        "total": 0
     },
     "p4": {
         "valid": 0,
-        "invalid": 0
+        "total": 0
     },
     "p5": {
         "valid": 0,
-        "invalid": 0
+        "total": 0
     },
 }
 
@@ -164,10 +165,20 @@ for result in results:
     valid = True
     if lint is None or len(lint) == 0:
         continue
-    for lint_output in lint[0]["output"]:
+    for lint_output in lint["output"]:
         kind.append(lint_output["kind"])
-        if lint_output["kind"] == "syntax-check" or lint_output["kind"] == "workflow-syntax-check":
+        if lint_output["kind"] == "syntax-check" and "ail-fast" not in lint_output["message"]:
             valid = False
+    validity[result["description_id"]]["total"] += 1
+    if valid:
+        validity[result["description_id"]]["valid"] += 1
+
+print("Custom validation")
+for key in validity.keys():
+    print(key, validity[key]["valid"]/validity[key]["total"])
+print("Number of predictions per description")
+for key in validity.keys():
+    print(key, validity[key]["total"])
 
 print("KIND")
 print(pd.DataFrame(kind).value_counts())

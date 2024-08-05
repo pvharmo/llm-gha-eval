@@ -6,7 +6,7 @@ def parse_permissions(permissions: Union[str, Dict[str, str]]) -> str:
     if isinstance(permissions, str):
         return f" sets permissions to '{permissions}'."
     elif isinstance(permissions, dict):
-        perm_list = [f"'{key}': {value}" for key, value in permissions.items()]
+        perm_list = [f"{value} for {key}" for key, value in permissions.items()]
         if len(perm_list) == 1:
             return f" sets the following permission: {perm_list[0]}."
         elif len(perm_list) == 2:
@@ -21,9 +21,9 @@ def parse_defaults(defaults: Dict[str, Any]) -> str:
     if 'run' in defaults:
         run_defaults = defaults['run']
         if 'shell' in run_defaults:
-            result += f" The default shell is '{run_defaults['shell']}'."
+            result += f" sets the default shell is '{run_defaults['shell']}'."
         if 'working-directory' in run_defaults:
-            result += f" The default working directory is '{run_defaults['working-directory']}'."
+            result += f" sets the default working directory is '{run_defaults['working-directory']}'."
     return result
 
 def parse_strategy(strategy: Dict[str, Any]) -> str:
@@ -31,23 +31,28 @@ def parse_strategy(strategy: Dict[str, Any]) -> str:
     if 'matrix' in strategy:
         matrix = strategy['matrix']
         matrix_items = [f"'{key}': {value}" for key, value in matrix.items()]
-        result += f" with the following dimensions: {', '.join(matrix_items)}."
+        result += f" with the following dimensions: {', '.join(matrix_items)}"
 
         if 'include' in matrix:
             include_items = [f"{{{', '.join(f'{k}: {v}' for k, v in item.items())}}}" for item in matrix['include']]
-            result += f" The strategy includes additional combinations: {', '.join(include_items)}."
+            result += f" The strategy includes additional combinations: {', '.join(include_items)}"
 
         if 'exclude' in matrix:
             exclude_items = [f"{{{', '.join(f'{k}: {v}' for k, v in item.items())}}}" for item in matrix['exclude']]
-            result += f" The strategy excludes the following combinations: {', '.join(exclude_items)}."
+            result += f" The strategy excludes the following combinations: {', '.join(exclude_items)}"
 
     if 'fail-fast' in strategy:
-        result += f" Fail-fast is set to {strategy['fail-fast']}."
+        if 'matrix' in strategy:
+            result += f" and fail-fast is set to {strategy['fail-fast']}"
+        else:
+            result += f" with fail-fast is set to {strategy['fail-fast']}"
 
     if 'max-parallel' in strategy:
-        result += f" The maximum number of parallel jobs is {strategy['max-parallel']}."
+        if 'matrix' in strategy or 'fail-fast' in strategy:
+            result += f" and the maximum number of parallel jobs is {strategy['max-parallel']}"
+        result += f" with a maximum number of parallel jobs is {strategy['max-parallel']}"
 
-    return result
+    return result + "."
 
 def parse_container(container: Union[str, Dict[str, Any]]) -> str:
     if isinstance(container, str):

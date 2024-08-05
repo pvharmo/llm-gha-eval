@@ -51,6 +51,7 @@ def prepare_workflow(workflow_infos):
 
         for key, value in description.items():
             with open(directory + "/generated_descriptions/" + key + "_" + workflow_file + ".txt", "w") as file:
+                print("writing to " + directory + "/generated_descriptions/" + key + "_" + workflow_file + ".txt")
                 file.write(value)
     except Exception as e:
         print(e)

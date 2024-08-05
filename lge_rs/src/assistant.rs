@@ -1,4 +1,5 @@
-use serde::{Serialize, Deserialize};
+use reqwest::StatusCode;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Message {
@@ -34,12 +35,10 @@ impl Assistant {
             content: question.to_string(),
         });
 
-        let mut messages = vec![
-            Message {
-                role: "system".to_string(),
-                content: self.description.to_string(),
-            },
-        ];
+        let mut messages = vec![Message {
+            role: "system".to_string(),
+            content: self.description.to_string(),
+        }];
         for message in self.messages.iter() {
             messages.push(message.clone());
         }
@@ -56,12 +55,15 @@ impl Assistant {
 
         // println!("{:?}", messages);
         let res = client
-               .post(self.base_url.to_string() + "/chat/completions")
-               .header("Authorization", "Bearer ".to_string() + &self.api_key)
-               .header("Content-Type", "application/json")
-               .json(&data)
-               .send()?;
+            .post(self.base_url.to_string() + "/chat/completions")
+            .header("Authorization", "Bearer ".to_string() + &self.api_key)
+            .header("Content-Type", "application/json")
+            .json(&data)
+            .send()?;
 
+        if res.status() != StatusCode::OK {
+            println!("{}", res.status());
+        }
 
         let body: serde_json::Value = res.json()?;
         // println!("{:?}", body);
