@@ -15,7 +15,7 @@ pub fn run(prediction: &Prediction, eval_id: u64) {
         - Give a score of three if the workflow follows the goal of the description but does not follow any more elements of the description.
         - Give a score of four if the workflow follows the goal of the description and some of the details.
         - Give a score of five if the workflow follows the goal of the description and all of the details.
-        Before giving a score, you must explain your reasoning in detail, then, based on your explanationd, give a score. Wrap the scores in double parenthesis and prefix the score with event for the evaluation of events and with jobs for the evaluation of jobs.
+        Before giving a score, you must explain your reasoning in detail, then, based on your explanation, give a score. Wrap the scores in double parenthesis and prefix the score with event for the evaluation of events and with jobs for the evaluation of jobs.
         Here is an example of how you should format the score: ((event: x)) ((jobs: y)) where x and y are the scores for the events and jobs respectively.
     ";
 

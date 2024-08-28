@@ -73,14 +73,14 @@ pub fn get_descriptions(workflow: &Workflow) -> Result<Vec<(&str, String)>, std:
         "step_level_infos",
         &workflow.workflow_file,
     )?;
-    let dependencies =
-        read_desciption_file(&workflow.directory, "dependencies", &workflow.workflow_file)?;
+    // let dependencies =
+    //     read_desciption_file(&workflow.directory, "dependencies", &workflow.workflow_file)?;
 
     let descriptions = vec![
-        (
-            "p1",
-            workflow_level_infos.clone() + event_triggers.as_str() + job_ids.as_str(),
-        ),
+        // (
+        //     "p1",
+        //     workflow_level_infos.clone() + event_triggers.as_str() + job_ids.as_str(),
+        // ),
         (
             "p2",
             workflow_level_infos.clone()
@@ -88,21 +88,21 @@ pub fn get_descriptions(workflow: &Workflow) -> Result<Vec<(&str, String)>, std:
                 + job_ids.as_str()
                 + step_names.as_str(),
         ),
-        (
-            "p3",
-            workflow_level_infos.clone()
-                + event_triggers.as_str()
-                + job_ids.as_str()
-                + step_names.as_str()
-                + dependencies.as_str(),
-        ),
-        (
-            "p4",
-            workflow_level_infos.clone()
-                + event_triggers.as_str()
-                + job_level_infos.as_str()
-                + step_names.as_str(),
-        ),
+        // (
+        //     "p3",
+        //     workflow_level_infos.clone()
+        //         + event_triggers.as_str()
+        //         + job_ids.as_str()
+        //         + step_names.as_str()
+        //         + dependencies.as_str(),
+        // ),
+        // (
+        //     "p4",
+        //     workflow_level_infos.clone()
+        //         + event_triggers.as_str()
+        //         + job_level_infos.as_str()
+        //         + step_names.as_str(),
+        // ),
         (
             "p5",
             workflow_level_infos

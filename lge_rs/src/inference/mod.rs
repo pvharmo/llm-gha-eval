@@ -5,7 +5,7 @@ use std::time::SystemTime;
 
 use crate::assistant::Assistant;
 
-mod docs;
+// mod docs;
 pub mod utils;
 use utils::{extract_workflow, get_descriptions, get_repositories, save_inference, Prediction};
 
@@ -24,8 +24,7 @@ pub fn run() {
     );
 
     let system_prompt =
-        "You are a software engineer. Please generate a YAML file based on the user's input below. No additional explanation is needed. The output format should be ```yaml <Workflow>```.
-        Here is the documentation for the syntax of GitHub Actions workflows: "; //.to_string() + &docs::get_gha_docs();
+        "You are a software engineer. Please generate a YAML file based on the user's input below. No additional explanation is needed. The output format should be ```yaml <Workflow>```.";
     let model = "meta-llama/Meta-Llama-3.1-70B-Instruct".to_string();
 
     let run_id: u64;
