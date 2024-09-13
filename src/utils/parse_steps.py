@@ -7,9 +7,13 @@ def step_names(workflow):
     for i, job_name in enumerate(workflow["jobs"]):
         job = workflow["jobs"][job_name]
 
-        step_names = f' The job {job_name} has {count[len(job["steps"])]} step{"s" if len(job["steps"]) > 1 else ""}.'
+        step_names = f' The job {job_name} has {count[len(job["steps"])] if len(job["steps"]) < 100 else "over one hundred"} step{"s" if len(job["steps"]) > 1 else ""}.'
         if len(job["steps"]) == 1:
-            step_names += f' The step is named "{job["steps"][0]["name"]}".'
+            step = job["steps"][0]
+            if "name" in step:
+                step_names += f' The step is named "{step["name"]}".'
+            elif "uses" in step and step["uses"].startswith("actions/checkout@"):
+                step_names += f' The step is a "Checkout code".'
         else:
             for i, step in enumerate(job["steps"]):
                 if "name" in step:
@@ -36,7 +40,7 @@ def step_names_with_details(workflow):
     for job_id, job in workflow['jobs'].items():
         steps = job.get('steps', [])
 
-        output += f'The job "{job_id}" has {count[len(job["steps"])]} step{"s" if len(steps) > 1 else ""}. '
+        output += f'The job "{job_id}" has {count[len(job["steps"])] if len(job["steps"]) < 100 else "over one hundred"} step{"s" if len(steps) > 1 else ""}. '
         for i, step in enumerate(steps, 1):
             output += parse_step(step, i) + ' '
     return output

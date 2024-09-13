@@ -7,6 +7,8 @@ def parse_permissions(permissions: Union[str, Dict[str, str]]) -> str:
         return f" sets permissions to '{permissions}'."
     elif isinstance(permissions, dict):
         perm_list = [f"{value} for {key}" for key, value in permissions.items()]
+        if len(perm_list) == 0:
+            return f" sets empty permissions."
         if len(perm_list) == 1:
             return f" sets the following permission: {perm_list[0]}."
         elif len(perm_list) == 2:
@@ -30,10 +32,14 @@ def parse_strategy(strategy: Dict[str, Any]) -> str:
     result = " uses a matrix strategy"
     if 'matrix' in strategy:
         matrix = strategy['matrix']
+        if isinstance(matrix, str):
+            return f" from {matrix}"
         matrix_items = [f"'{key}': {value}" for key, value in matrix.items()]
         result += f" with the following dimensions: {', '.join(matrix_items)}"
 
         if 'include' in matrix:
+            if isinstance(matrix['include'], str):
+                return f"  The strategy includes additional combinations: {matrix}"
             include_items = [f"{{{', '.join(f'{k}: {v}' for k, v in item.items())}}}" for item in matrix['include']]
             result += f" The strategy includes additional combinations: {', '.join(include_items)}"
 
@@ -60,8 +66,11 @@ def parse_container(container: Union[str, Dict[str, Any]]) -> str:
     elif isinstance(container, dict):
         result = f" runs in a container using the '{container['image']}' image."
         if 'env' in container:
-            env_list = [f"'{key}': '{value}'" for key, value in container['env'].items()]
-            result += f" The container environment includes: {', '.join(env_list)}."
+            if isinstance(container['env'], str):
+                result += f" The container environment includes: {container['env']}."
+            else:
+                env_list = [f"'{key}': '{value}'" for key, value in container['env'].items()]
+                result += f" The container environment includes: {', '.join(env_list)}."
         if 'ports' in container:
             result += f" The container exposes the following ports: {', '.join(map(str, container['ports']))}."
         if 'volumes' in container:
@@ -70,36 +79,39 @@ def parse_container(container: Union[str, Dict[str, Any]]) -> str:
     else:
         return ""
 
-def parse_services(services: Dict[str, Dict[str, Any]]) -> str:
+def parse_services(services: Dict[str, Dict[str, Any]] | str) -> str:
+    if isinstance(services, str):
+        return "uses the following service : " + services
     result = " uses the following service containers:"
-    for service_name, service_config in services.items():
-        result += f"\n- '{service_name}' (image: '{service_config.get('image', 'Not specified')}')"
+    if isinstance(services, list):
+        for service_name, service_config in services.items():
+            result += f"\n- '{service_name}' (image: '{service_config.get('image', 'Not specified')}')"
 
-        if 'credentials' in service_config:
-            creds = service_config['credentials']
-            result += f"\n  Credentials: username: '{creds.get('username', 'Not specified')}', password: '{'*' * len(creds.get('password', ''))}'"
+            if 'credentials' in service_config:
+                creds = service_config['credentials']
+                result += f"\n  Credentials: username: '{creds.get('username', 'Not specified')}', password: '{'*' * len(creds.get('password', ''))}'"
 
-        if 'env' in service_config:
-            env_vars = [f"{k}: '{v}'" for k, v in service_config['env'].items()]
-            result += f"\n  Environment variables: {', '.join(env_vars)}"
+            if 'env' in service_config:
+                env_vars = [f"{k}: '{v}'" for k, v in service_config['env'].items()]
+                result += f"\n  Environment variables: {', '.join(env_vars)}"
 
-        if 'ports' in service_config:
-            ports = service_config['ports']
-            result += f"\n  Ports: {', '.join(map(str, ports))}"
+            if 'ports' in service_config:
+                ports = service_config['ports']
+                result += f"\n  Ports: {', '.join(map(str, ports))}"
 
-        if 'volumes' in service_config:
-            volumes = service_config['volumes']
-            result += f"\n  Volumes: {', '.join(volumes)}"
+            if 'volumes' in service_config:
+                volumes = service_config['volumes']
+                result += f"\n  Volumes: {', '.join(volumes)}"
 
-        if 'options' in service_config:
-            options = service_config['options']
-            if isinstance(options, str):
-                result += f"\n  Options: {options}"
-            elif isinstance(options, list):
-                result += f"\n  Options: {' '.join(options)}"
-            elif isinstance(options, dict):
-                option_items = [f"{k}: '{v}'" for k, v in options.items()]
-                result += f"\n  Options: {', '.join(option_items)}"
+            if 'options' in service_config:
+                options = service_config['options']
+                if isinstance(options, str):
+                    result += f"\n  Options: {options}"
+                elif isinstance(options, list):
+                    result += f"\n  Options: {' '.join(options)}"
+                elif isinstance(options, dict):
+                    option_items = [f"{k}: '{v}'" for k, v in options.items()]
+                    result += f"\n  Options: {', '.join(option_items)}"
 
     return result
 
@@ -148,7 +160,7 @@ def parse_job(job_name: str, job_config: Dict[str, Any]) -> str:
                 result += f" needs the '{needs[0]}' job to complete first."
             elif len(needs) == 2:
                 result += f" needs the '{needs[0]}' and '{needs[1]}' jobs to complete first."
-            else:
+            elif len(needs) > 2:
                 result += f" needs the following jobs to complete first: {', '.join(needs[:-1])}, and {needs[-1]}."
 
     if 'if' in job_config:

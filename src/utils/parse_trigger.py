@@ -11,9 +11,9 @@ def parse_workflow(workflow: dict):
     elif isinstance(triggers, dict):
         trigger_descriptions.extend([parse_trigger({k: v}) for k, v in triggers.items() if k != 'on'])
     elif isinstance(triggers, list):
-        trigger_descriptions.append(f" The workflow would run on any {", ".join(triggers)} event.")
+        trigger_descriptions.append(f" The workflow would run on any {', '.join(triggers)} event.")
     else:
-        raise ValueError("Invalid workflow format.")
+        return None
 
     description = " Additionally,".join(trigger_descriptions)
     print(description)
@@ -51,7 +51,7 @@ def parse_trigger(trigger):
             return parse_workflow_call_event(event_config)
         else:
             if "types" in event_config:
-                return f" The workflow would run on a {event_type} event with types set as {format_list(event_config["types"], 'or')}."
+                return f" The workflow would run on a {event_type} event with types set as {format_list(event_config['types'], 'or')}."
             return f" The workflow would run on a {event_type} event."
     else:
         raise ValueError("Invalid trigger format.")
@@ -105,9 +105,14 @@ def parse_pull_request_event(event_config):
     conditions = ""
     if "types" in event_config:
         pr_types = event_config["types"]
+        if pr_types is None:
+            precondition += "when a pull request is opened, edited, or deleted"
         precondition += f"when a pull request is {format_list(pr_types, 'or')}"
     if "branches" in event_config:
-        conditions += f"to branches {format_list(event_config['branches'])}"
+        if event_config["branches"] is None:
+            conditions += "to any branches"
+        else:
+            conditions += f"to branches {format_list(event_config['branches'])}"
     if "branches-ignore" in event_config:
         ignored_branches = event_config["branches-ignore"]
         if "branches" in event_config:
@@ -146,24 +151,27 @@ def format_list(items, conjunction="or"):
         return f'"{items[0]}"'
     elif len(items) == 2:
         return f'"{items[0]}" {conjunction} "{items[1]}"'
-    else:
+    elif len(items) > 2:
         return ", ".join(f'"{item}"' for item in items[:-1]) + f', {conjunction} "{items[-1]}"'
 
 def parse_workflow_dispatch_event(event_config):
     description = " The workflow can be manually triggered"
 
-    if "inputs" in event_config:
+    if "inputs" in event_config and event_config["inputs"] is not None:
         input_descriptions = []
         for input_name, input_config in event_config["inputs"].items():
-            input_desc = f"'{input_name}' (type: {input_config.get('type', 'string')}"
-            if input_config.get('required', False):
-                input_desc += ", required"
+            if input_config is None:
+                input_desc = f"'{input_name}'"
             else:
-                input_desc += ", optional"
+                input_desc = f"'{input_name}' (type: {input_config.get('type', 'string')}"
+                if input_config.get('required', False):
+                    input_desc += ", required"
+                else:
+                    input_desc += ", optional"
 
-            if input_config.get('type', 'string') == 'choice':
-                input_desc += f", choices: {format_list(input_config['options'])}"
-            input_desc += ")"
+                if input_config.get('type', 'string') == 'choice':
+                    input_desc += f", choices: {format_list(input_config['options'])}"
+                input_desc += ")"
             input_descriptions.append(input_desc)
 
         if input_descriptions:
@@ -173,7 +181,7 @@ def parse_workflow_dispatch_event(event_config):
 
 def parse_path_conditions(event_config, also: bool):
     path_conditions = []
-    if "paths" in event_config:
+    if "paths" in event_config and event_config["paths"] is not None:
         path_conditions.append(f" with changes made to files matching {format_list(event_config['paths'])}")
     if "paths-ignore" in event_config:
         if "paths" in event_config:

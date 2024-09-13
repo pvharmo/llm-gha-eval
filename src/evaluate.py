@@ -1,10 +1,5 @@
 import sys
-import os
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
 
-import re as regex
 import json
 import pandas as pd
 from tqdm import tqdm
@@ -12,13 +7,13 @@ import yaml
 import sqlite3
 import time
 
-from assistant import Assistant
+from utils.assistant import Assistant
 
 import env
-from utils.action_validation import action_validator
-from utils.action_comparison import actions_comparison, bleu_score
-from utils.deepdiff import deepdiff_compare
-from utils.llm_judge import llm_as_a_judge
+from utils.analysis.action_validation import action_validator
+from utils.analysis.action_comparison import actions_comparison, bleu_score
+from utils.analysis.deepdiff import deepdiff_compare
+from utils.analysis.llm_judge import llm_as_a_judge
 
 try:
     run_id = int(sys.argv[1])

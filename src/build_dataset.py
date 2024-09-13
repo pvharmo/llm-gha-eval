@@ -1,31 +1,13 @@
-import sys
 import os
 import datetime
 from time import sleep
-
-# Get the current script's directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Get the parent directory
-parent_dir = os.path.dirname(current_dir)
-
-# Add the parent directory to sys.path
-sys.path.append(parent_dir)
-
-from github import GithubException, UnknownObjectException, ContentFile, Github
+from github import UnknownObjectException, ContentFile, Github
 from env import gh_token
 import pandas as pd
 import os
-import json
 import msgspec
 from github import Auth
-import yaml
 from tqdm import tqdm
-
-from utils.count import count
-from assistant import Assistant
-import env
-from utils.description import generate_description, prepare_workflow
 
 start_time = datetime.datetime.now()
 print(f"Started at {start_time}")
