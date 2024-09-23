@@ -1,13 +1,13 @@
 import sqlite3
 
-con = sqlite3.connect("results/gha_llm_benchmark.db")
+con = sqlite3.connect("../results/gha_llm_benchmark.db")
 cur = con.cursor()
 
 cur.execute("""
     CREATE TABLE IF NOT EXISTS runs(
         run_id INTEGER PRIMARY KEY AUTOINCREMENT,
         started_at INTEGER NOT NULL,
-        models JSON NOT NULL
+        algorithm TEXT NOT NULL
     )"""
 )
 
@@ -15,10 +15,8 @@ cur.execute("""
     CREATE TABLE IF NOT EXISTS predictions(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         run_id INTEGER NOT NULL,
-        owner TEXT NOT NULL,
-        repository TEXT NOT NULL,
-        name TEXT NOT NULL,
-        model TEXT NOT NULL,
+        dataset_id TEXT NOT NULL,
+        algorithm TEXT NOT NULL,
         description_id TEXT,
         description TEXT,
         response TEXT,

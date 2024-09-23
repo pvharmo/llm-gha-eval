@@ -8,7 +8,7 @@ import time
 from utils.assistant import Assistant
 import env
 
-con = sqlite3.connect("results/gha_llm_benchmark.db")
+con = sqlite3.connect("../results/gha_llm_benchmark.db")
 cur = con.cursor()
 
 models = pd.DataFrame([

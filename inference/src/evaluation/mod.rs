@@ -1,4 +1,4 @@
-use crate::inference::utils::Prediction;
+use crate::generation::utils::Prediction;
 use rayon::prelude::*;
 use rusqlite::Connection;
 use std::time::SystemTime;
@@ -48,18 +48,16 @@ pub fn get_predictions(run_id: u64) -> (Vec<Prediction>, u64) {
     let predictions_iter = stmt
         .query_map([run_id], |row| {
             Ok(Prediction {
-                id: Some(row.get(11).unwrap()),
+                id: Some(row.get(8).unwrap()),
                 run_id: row.get(0).unwrap(),
-                owner: row.get(1).unwrap(),
-                repository: row.get(2).unwrap(),
-                name: row.get(3).unwrap(),
-                model: row.get(4).unwrap(),
-                description_id: row.get(5).unwrap(),
-                description: row.get(6).unwrap(),
-                response: row.get(7).unwrap(),
-                workflow: row.get(8).unwrap(),
-                error_type: row.get(9).unwrap(),
-                error_text: row.get(10).unwrap(),
+                dataset_id: row.get(1).unwrap(),
+                algorithm: row.get(2).unwrap(),
+                description_id: row.get(3).unwrap(),
+                description: row.get(4).unwrap(),
+                response: row.get(5).unwrap(),
+                workflow: row.get(6).unwrap(),
+                error_type: row.get(7).unwrap(),
+                error_text: row.get(8).unwrap(),
             })
         })
         .unwrap();

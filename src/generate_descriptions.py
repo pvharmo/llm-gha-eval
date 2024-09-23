@@ -7,7 +7,30 @@ import polars as pl
 
 import env
 
-workflows = pl.read_csv(env.dataset_file)
+ids = [
+    "63c5c81ac779603593ca4a0a",
+    "63c4957c7843b61269a07e82",
+    "63c494547843b61269a0088c",
+    "63c49ceb33b087f6bde55eee",
+    "63c498a6b008460c1df228cb",
+    "63c496f433b087f6bde2f6b5",
+    "63c494718052faa2781ab3ad",
+    "63c4962d6fc19abdf9c9a59d",
+    "63c49e98517fc08c1ef04736",
+    "63c497781e33648075781305",
+    "63c497d26fc19abdf9ca518f",
+    "63c4a074736e7f0ed8c74c8d",
+    "63c49aa61e336480757959ec",
+    "63c499a1cbc73931bb18ee43",
+    "63c493f78052faa2781a836b",
+    "63c496941e3364807577b88d",
+    "63c49ba0517fc08c1eef1895",
+    "63c4a03d517fc08c1ef0eae2",
+    "63c49b7f1e3364807579ae92",
+    "63c5c692ac4f2678a5bd8deb",
+]
+
+workflows = pl.read_csv(env.dataset_file, truncate_ragged_lines=True, batch_size=1000)
 workflows = workflows.select(pl.col(
     "workflow_name",
     "workflow_path",
@@ -23,11 +46,11 @@ workflows = workflows.select(pl.col(
     "repo_metadata.default_branch": "default_branch",
     "repo_metadata.full_name": "full_name",
     "repo_metadata.id": "repo_id",
-})
+}).filter(pl.col("id").is_in(ids))
 
 descriptions = []
 
-for workflow_infos in workflows.iter_rows(named=True):
+for workflow_infos in tqdm(workflows.iter_rows(named=True)):
     validation = action_validator(workflow_infos["workflow_yaml"])
     if validation is None:
         continue

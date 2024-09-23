@@ -1,0 +1,135 @@
+# GitHub Actions Workflow GBNF Grammar
+
+root ::= workflow
+
+workflow ::= name nl+ "on:" ws trigger-definition (nl+ concurrency)* nl+ "jobs:" (nl job)+
+
+# ########################################
+# Trigger Definitions
+# ########################################
+
+trigger-definition ::= single-event | multiple-events | event-dict+
+
+event-dict ::= nl indent (workflow-call | push | workflow-dispatch)
+
+workflow-dispatch ::= "workflow_dispatch:"# nl indent indent workflow-call-definition
+
+# ----------------------------------------
+# Push Definitions
+# ----------------------------------------
+
+push ::= "push:" (nl indent push-params)?
+
+push-params ::= indent indent indent "branches:" ws #"[" branch-list "]"
+
+# ----------------------------------------
+# Workflow Call Definitions
+# ----------------------------------------
+
+workflow-call ::= "workflow_call:" nl indent indent workflow-call-definition
+
+workflow-call-definition ::= "inputs:" nl input-definitions nl* indent indent "secrets:" nl secret-definitions nl
+
+input-definitions ::= input-definition (input-definition)*
+
+input-definition ::= indent indent indent identifier ":" nl (indent indent indent indent input-definition-value nl)+
+
+input-definition-value ::= "description:" ws string | "required:" ws boolean | "default:" ws string | "type:" ws string
+
+secret-definitions ::= secret-definition (secret-definition)*
+
+secret-definition ::= indent indent indent identifier ":" nl (indent indent indent indent secret-definition-value nl)+
+
+secret-definition-value ::= "description:" ws string | "required:" ws boolean
+
+# ----------------------------------------
+
+single-event ::= event-name | event-name-with-types
+
+event-name ::= "push" | "pull-request" | "schedule" | "workflow-dispatch"
+
+event-name-with-types ::= event-name ":" nl indent event-types
+
+event-types ::= "types:" ws "[" event-type-list "]"
+
+event-type-list ::= event-type ("," ws event-type)*
+
+event-type ::= "created" | "edited" | "opened" | "synchronize" | "closed"
+
+multiple-events ::= "[" event-list "]"
+
+event-list ::= event-name ("," ws event-name)*
+
+# ########################################
+# Concurrency Definitions
+# ########################################
+
+concurrency ::= "concurrency:" nl concurrency-params+
+
+concurrency-params ::= indent (concurrency-group | cancel-in-progress) (nl indent (concurrency-group | cancel-in-progress))*
+concurrency-group ::= "group:" ws string
+cancel-in-progress ::= "cancel-in-progress:" ws boolean
+
+# ########################################
+# Job Definitions
+# ########################################
+
+job ::= string ":" nl (indent indent job-options nl+)+
+
+job-options ::= runs-on | if | needs | env | steps | name | outputs | timeout | container
+
+runs-on ::= "runs-on:" ws runner
+needs ::= "needs:" ws string
+timeout ::= "timeout-minutes:" ws number
+env ::= "env:" nl indent indent indent key-value
+outputs ::= "outputs:" (nl indent indent indent identifier ":" ws string)+
+
+container ::= "container:" nl container-params
+container-params ::= indent indent indent (container-image | volumes) (nl indent indent indent (container-image | volumes))*
+container-image ::= "image:" ws string
+
+volumes ::= "volumes:" (nl indent indent indent indent "- " string)+
+
+runner ::= "ubuntu-latest" | "windows-latest" | "macos-latest"
+
+# ########################################
+# Step Definitions
+# ########################################
+
+steps ::= "steps:" nl step (nl nl? step)*
+
+step ::= indent indent indent "- " step-definition (nl indent indent indent indent step-definition)*
+
+step-definition ::= name | "uses:" ws action (nl with-definition)? | "id:" ws string
+
+action ::= string
+
+with-definition ::= (indent indent indent indent "with:" nl with-params)?
+
+with-params ::= with-param (nl with-param)*
+
+with-param ::= indent indent indent indent indent string ":" ws string
+
+# ########################################
+# Utility Definitions
+# ########################################
+
+string ::= [a-zA-Z0-9--| |\u0024|\u007D|"("-")"|"'"|"&"|",","!"]+
+
+ws ::= [ \t]*
+
+nl ::= "\n"
+
+indent ::= "  "
+
+identifier ::= [a-zA-Z0-9-_]+
+
+boolean ::= "true" | "false"
+
+if ::= "if:" ws string
+
+name ::= "name:" ws string
+
+number ::= [0-9]+
+
+key-value ::= identifier ":" ws string

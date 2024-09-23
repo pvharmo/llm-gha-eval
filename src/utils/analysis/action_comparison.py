@@ -33,7 +33,7 @@ def actions_comparison(original, generated):
         "jaccard_index": jaccard_index,
         # "edit_distance": edit_distance_value,
         "diff_nb_steps": nb_steps_original - nb_steps_generated,
-        "ration_nb_steps": nb_steps_generated / nb_steps_original,
+        "ration_nb_steps": nb_steps_generated / nb_steps_original if nb_steps_original > 0 else 0,
     }
 
 # Recusive implementation of the edit distance algorithm (it is very slow)

@@ -4,7 +4,7 @@ use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 
 use crate::assistant::Assistant;
-use crate::inference::utils::Prediction;
+use crate::generation::utils::Prediction;
 
 pub fn run(prediction: &Prediction, eval_id: u64) {
     let model = "meta-llama/Meta-Llama-3.1-70B-Instruct";
