@@ -1,8 +1,0 @@
-{
-    "requests": [
-        {
-            "repository": "amilajack/eslint-plugin-compat",
-            "detailed_description": "http://localhost:8080/echo"
-        }
-    ]
-}

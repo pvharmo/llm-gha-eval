@@ -9,6 +9,8 @@ sandbox/*
 !sandbox/.gitkeep
 
 .zed
+.stignore
+.stfolder
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
