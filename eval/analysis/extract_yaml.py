@@ -6,4 +6,4 @@ def extract_yaml(text):
     if matches:
         return matches.group(1)
     else:
-        return None
+        return ""

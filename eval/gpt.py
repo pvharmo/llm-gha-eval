@@ -6,28 +6,41 @@ import polars as pl
 import json
 import os
 
+from dataset.load_dataset import load_dataset
+
 client = OpenAI(api_key=openai_key)
 
-data = pl.read_ndjson("../dataset/validation_level1_sm.jsonl")
-intermediate_file = "../dataset/intermediate/gpt/validation_level1_sm.jsonl"
+dataset = load_dataset("validation")["validation"]
+intermediate_file = "../dataset/intermediate/gpt/validation_all_sm_finetuned.jsonl"
 if os.path.exists(intermediate_file):
     os.remove(intermediate_file)
 with open(intermediate_file, "w") as f:
-    for row in data.iter_rows(named=True):
+    for row in dataset.to_iterable_dataset():
         new_row = {
-            "custom_id": row["id"],
+            "custom_id": row["id"] + "_" + row["level"],
             "method": "POST",
             "url": "/v1/chat/completions",
             "body": {
-                "model" : "gpt-4o-mini",
-                "messages": row["messages"],
+                "model" : "ft:gpt-4o-mini-2024-07-18:personal:200examples-all:AHAf0ozi",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": row["system_prompt"]
+                    },
+                    {
+                        "role": "user",
+                        "content": row["user_prompt"]
+                    }
+                ],
                 "max_tokens": 4096
             }
         }
         f.write(json.dumps(new_row) + "\n")
 
+
+input("Start the batch job?")
 batch_input_file = client.files.create(
-  file=open("../dataset/intermediate/gpt/validation_level1_sm.jsonl", "rb"),
+  file=open(intermediate_file, "rb"),
   purpose="batch"
 )
 
