@@ -150,14 +150,18 @@ def apply_chat_template(
     example,
     tokenizer,
 ):
-    messages = example["messages"]
+    messages = [
+        {"role": "system", "content": example["system_prompt"]},
+        {"role": "user", "content": example["user_prompt"]},
+        {"role": "assistant", "content": example["answer"]}
+    ]
     example["text"] = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=False)
     return example
 
-raw_dataset = load_dataset("HuggingFaceH4/ultrachat_200k")
-train_dataset = raw_dataset["train_sft"]
-test_dataset = raw_dataset["test_sft"]
+raw_dataset = load_dataset("pvharmo/llm-gha")
+train_dataset = raw_dataset["train"]
+test_dataset = raw_dataset["validation"]
 column_names = list(train_dataset.features)
 
 processed_train_dataset = train_dataset.map(
@@ -165,7 +169,7 @@ processed_train_dataset = train_dataset.map(
     fn_kwargs={"tokenizer": tokenizer},
     num_proc=10,
     remove_columns=column_names,
-    desc="Applying chat template to train_sft",
+    desc="Applying chat template to train",
 )
 
 processed_test_dataset = test_dataset.map(
@@ -173,7 +177,7 @@ processed_test_dataset = test_dataset.map(
     fn_kwargs={"tokenizer": tokenizer},
     num_proc=10,
     remove_columns=column_names,
-    desc="Applying chat template to test_sft",
+    desc="Applying chat template to validation",
 )
 
 
