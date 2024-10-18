@@ -72,7 +72,7 @@ training_config = {
     "lr_scheduler_type": "cosine",
     "num_train_epochs": 1,
     "max_steps": -1,
-    "output_dir": "./checkpoint_dir",
+    "output_dir": "./checkpoints",
     "overwrite_output_dir": True,
     "per_device_eval_batch_size": 4,
     "per_device_train_batch_size": 4,
