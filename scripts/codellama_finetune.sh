@@ -7,8 +7,9 @@
 
 module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 
-source venv/bin/activate
+source /home/pvharmo/llm-gha-eval/venv/bin/activate
 mkdir $SLURM_TMPDIR/data
+mkdir -p /home/pvharmo/scratch/CodeLlama-7b-Instruct-hf/checkpoints
 
 cd ../finetuning
-accelerate launch codellama_finetune.py
+accelerate launch /home/pvharmo/llm-gha-eval/finetuning/codellama_finetune.py
