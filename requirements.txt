@@ -7,3 +7,11 @@ peft
 torch
 transformers
 trl
+bitsandbytes
+deepspeed>=0.14.4
+accelerate
+pandas
+sympy
+psutil
+flash-attn
+huggingface_hub
