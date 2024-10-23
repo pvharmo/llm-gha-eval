@@ -11,5 +11,5 @@ source /home/pvharmo/llm-gha-eval/venv/bin/activate
 mkdir $SLURM_TMPDIR/data
 mkdir -p /home/pvharmo/scratch/Phi-3.5-mini-instruct/checkpoints
 
-cd ../finetuning
-accelerate launch /home/pvharmo/llm-gha-eval/finetuning/phi_finetune.py
+cd /home/pvharmo/llm-gha-eval/finetuning/
+accelerate launch phi_finetune.py

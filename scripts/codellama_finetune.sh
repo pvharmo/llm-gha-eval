@@ -11,5 +11,5 @@ source /home/pvharmo/llm-gha-eval/venv/bin/activate
 mkdir $SLURM_TMPDIR/data
 mkdir -p /home/pvharmo/scratch/CodeLlama-7b-Instruct-hf/checkpoints
 
-cd ../finetuning
-accelerate launch /home/pvharmo/llm-gha-eval/finetuning/codellama_finetune.py
+cd /home/pvharmo/llm-gha-eval/finetuning/
+accelerate launch codellama_finetune.py

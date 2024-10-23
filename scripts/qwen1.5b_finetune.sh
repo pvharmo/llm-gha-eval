@@ -12,4 +12,4 @@ mkdir $SLURM_TMPDIR/data
 mkdir -p /home/pvharmo/scratch/Qwen2.5-Coder-1.5B-Instruct/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning
-accelerate launch /home/pvharmo/llm-gha-eval/finetuning/qwen_finetune.py --model qwen2.5-1.5b
+accelerate launch qwen_finetune.py --model qwen2.5-1.5b
