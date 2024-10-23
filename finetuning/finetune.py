@@ -136,7 +136,7 @@ def finetune(model, unk_pad_token=False):
     model_kwargs = dict(
         use_cache=False,
         trust_remote_code=True,
-        attn_implementation="flash_attention_2",  # loading the model with flash-attenstion support
+        attn_implementation="eager",
         torch_dtype=torch.bfloat16,
         device_map=None
     )

@@ -1,13 +1,18 @@
+import sys
+sys.path.append('../')
+
 from llama_cpp import Llama
 from datasets import load_dataset
 import json
 from tqdm import tqdm
 
+import env
+
 dataset = load_dataset("pvharmo/llm-gha")["validation"]
 
 repo_id = "Qwen/Qwen2.5-Coder-7B-Instruct-GGUF"
 llm = Llama.from_pretrained(
-    repo_id="Qwen/Qwen2.5-Coder-7B-Instruct-GGUF",
+    repo_id=repo_id,
     filename="qwen2.5-coder-7b-instruct-q8_0-00001-of-00003.gguf",
     additional_files=[
         "qwen2.5-coder-7b-instruct-q8_0-00002-of-00003.gguf",
@@ -27,5 +32,5 @@ for example in tqdm(dataset):
         "llm_response": response,
         "answer": example["answer"]
     })
-    with open(f"../results/{repo_id.replace('/','_')}.jsonl", "w") as f:
+    with open(f"{env.results_folder}/{repo_id.replace('/','_')}.jsonl", "w") as f:
         f.write(json_line)
