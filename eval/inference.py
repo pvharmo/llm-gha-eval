@@ -4,7 +4,7 @@ sys.path.append('../')
 import os
 import argparse
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import Dataset, load_dataset
+from datasets import Dataset, concatenate_datasets, load_dataset
 import json
 from tqdm import tqdm
 
@@ -24,15 +24,26 @@ checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") 
 
 print("Loading model ", checkpoint_path)
 
-model = AutoModelForCausalLM.from_pretrained(
-    checkpoint_path,
-    torch_dtype="auto",
-    device_map="auto"
-)
-tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
+# model = AutoModelForCausalLM.from_pretrained(
+#     checkpoint_path,
+#     torch_dtype="auto",
+#     device_map="auto"
+# )
+# tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
-test_dataset = test_dataset.select(range(400))
+
+example_per_level = 200
+unique_ids = list(set(test_dataset["id"]))[:200]
+test_dataset = test_dataset.filter(lambda example: example["id"] in unique_ids)
+
+test_dataset_level1 = test_dataset.filter(lambda example: example["level"] == "level1").select(range(example_per_level))
+test_dataset_level2 = test_dataset.filter(lambda example: example["level"] == "level2").select(range(example_per_level))
+test_dataset_level3 = test_dataset.filter(lambda example: example["level"] == "level3").select(range(example_per_level))
+test_dataset_level4 = test_dataset.filter(lambda example: example["level"] == "level4").select(range(example_per_level))
+test_dataset_level5 = test_dataset.filter(lambda example: example["level"] == "level5").select(range(example_per_level))
+
+test_dataset = concatenate_datasets([test_dataset_level1, test_dataset_level2, test_dataset_level3, test_dataset_level4, test_dataset_level5])
 
 results_path = f"{env.results_folder}/{args.model.replace('/','_')}.jsonl"
 
