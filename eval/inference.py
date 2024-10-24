@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../')
 
+import os
 import argparse
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import Dataset, load_dataset
@@ -29,6 +30,10 @@ tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
 test_dataset = test_dataset.select(range(400))
 
+results_path = f"{env.results_folder}/{args.model.replace('/','_')}.jsonl"
+
+if os.path.exists(results_path):
+    os.remove(results_path)
 
 for example in tqdm(test_dataset):
     messages = [
@@ -58,6 +63,6 @@ for example in tqdm(test_dataset):
         "answer": example["answer"]
     })
 
-    with open(f"{env.results_folder}/{args.model.replace('/','_')}.jsonl", "a") as f:
+    with open(results_path, "a") as f:
         f.write(json_line)
         f.write("\n")
