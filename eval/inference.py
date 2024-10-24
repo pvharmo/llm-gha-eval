@@ -24,12 +24,12 @@ checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") 
 
 print("Loading model ", checkpoint_path)
 
-# model = AutoModelForCausalLM.from_pretrained(
-#     checkpoint_path,
-#     torch_dtype="auto",
-#     device_map="auto"
-# )
-# tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
+model = AutoModelForCausalLM.from_pretrained(
+    checkpoint_path,
+    torch_dtype="auto",
+    device_map="auto"
+)
+tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
 
