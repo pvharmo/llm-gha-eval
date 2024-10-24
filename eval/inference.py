@@ -5,6 +5,7 @@ import argparse
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import Dataset, load_dataset
 import json
+from tqdm import tqdm
 
 import env
 
@@ -14,7 +15,9 @@ parser.add_argument("--finetune", action=argparse.BooleanOptionalAction)
 args = parser.parse_args()
 
 # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
-checkpoint_path = env.models_folder + "/finetunes/" if args.finetune else "/" + args.model
+checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") + args.model
+
+print("Loading model ", checkpoint_path)
 
 model = AutoModelForCausalLM.from_pretrained(
     checkpoint_path,
@@ -24,10 +27,10 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
-test_dataset = test_dataset.select(range(1000))
+test_dataset = test_dataset.select(range(400))
 
 
-for example in test_dataset:
+for example in tqdm(test_dataset):
     messages = [
         {"role": "system", "content": example["system_prompt"]},
         {"role": "user", "content": example["user_prompt"]}
