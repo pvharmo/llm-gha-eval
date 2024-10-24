@@ -15,6 +15,10 @@ parser.add_argument("--model", type=str)
 parser.add_argument("--finetune", action=argparse.BooleanOptionalAction)
 args = parser.parse_args()
 
+if args.model is None:
+    print("You need to specify the model to fine-tune.")
+    exit()
+
 # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
 checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") + args.model
 
@@ -59,6 +63,8 @@ for example in tqdm(test_dataset):
     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
     json_line = json.dumps({
+        "id": example["id"],
+        "level": example["level"],
         "llm_response": response,
         "answer": example["answer"]
     })
