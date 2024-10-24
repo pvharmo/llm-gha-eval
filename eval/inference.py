@@ -24,7 +24,7 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
-test_dataset = test_dataset.select(range(2))
+test_dataset = test_dataset.select(range(1000))
 
 
 for example in test_dataset:
