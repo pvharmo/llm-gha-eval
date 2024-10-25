@@ -10,4 +10,4 @@ module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 source /home/pvharmo/llm-gha-eval/venv/bin/activate
 
 cd /home/pvharmo/llm-gha-eval/eval/
-python inference_vllm.py --model Qwen2.5-Coder-7B-Instruct -t 0.5
+python inference_vllm.py --model Qwen2.5-Coder-7B-Instruct
