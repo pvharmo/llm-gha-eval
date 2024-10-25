@@ -36,32 +36,38 @@ example_per_level = 200
 unique_ids = list(set(test_dataset["id"]))[:200]
 test_dataset = test_dataset.filter(lambda example: example["id"] in unique_ids)
 
+test_dataset_level1 = test_dataset.filter(lambda example: example["level"] == "level1").select(range(example_per_level))
+test_dataset_level2 = test_dataset.filter(lambda example: example["level"] == "level2").select(range(example_per_level))
+test_dataset_level3 = test_dataset.filter(lambda example: example["level"] == "level3").select(range(example_per_level))
+test_dataset_level4 = test_dataset.filter(lambda example: example["level"] == "level4").select(range(example_per_level))
+test_dataset_level5 = test_dataset.filter(lambda example: example["level"] == "level5").select(range(example_per_level))
+
+dataset = concatenate_datasets([test_dataset_level1, test_dataset_level2, test_dataset_level3, test_dataset_level4, test_dataset_level5])
+
 results_path = f"{env.results_folder}/{args.model.replace('/','_')}-t{args.t}-top_p{args.top_p}{'-finetune' if args.finetune else ''}.jsonl"
 
 if os.path.exists(results_path):
     os.remove(results_path)
 
-for level in ["level1", "level2", "level3", "level4", "level5"]:
-    dataset = test_dataset.filter(lambda example: example["level"] == level).select(range(example_per_level))
-    dataset = dataset.map(lambda example: {"tokens":tokenizer.apply_chat_template(
-        [
-            {"role": "system", "content": example["system_prompt"]},
-            {"role": "user", "content": example["user_prompt"]}
-        ],
-        tokenize=False,
-        add_generation_prompt=True
-    )})
+dataset = dataset.map(lambda example: {"tokens":tokenizer.apply_chat_template(
+    [
+        {"role": "system", "content": example["system_prompt"]},
+        {"role": "user", "content": example["user_prompt"]}
+    ],
+    tokenize=False,
+    add_generation_prompt=True
+)})
 
-    outputs = llm.generate(dataset["tokens"], sampling_params, use_tqdm=True)
+outputs = llm.generate(dataset["tokens"], sampling_params, use_tqdm=True)
 
-    with open(results_path, "a") as f:
-        for example, output in tqdm(zip(dataset, outputs)):
-            json_line = json.dumps({
-                "id": example["id"],
-                "level": example["level"],
-                "llm_response": output.outputs[0].text,
-                "answer": example["answer"]
-            })
+with open(results_path, "a") as f:
+    for example, output in tqdm(zip(dataset, outputs)):
+        json_line = json.dumps({
+            "id": example["id"],
+            "level": example["level"],
+            "llm_response": output.outputs[0].text,
+            "answer": example["answer"]
+        })
 
-            f.write(json_line)
-            f.write("\n")
+        f.write(json_line)
+        f.write("\n")
