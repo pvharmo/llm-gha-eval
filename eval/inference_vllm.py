@@ -55,7 +55,7 @@ for level in ["level1", "level2", "level3", "level4", "level5"]:
     outputs = llm.generate(dataset["tokens"], sampling_params, use_tqdm=True)
 
     with open(results_path, "a") as f:
-        for example, output in tqdm(zip(test_dataset, outputs)):
+        for example, output in tqdm(zip(dataset, outputs)):
             json_line = json.dumps({
                 "id": example["id"],
                 "level": example["level"],
