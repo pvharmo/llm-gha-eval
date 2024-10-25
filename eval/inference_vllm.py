@@ -27,8 +27,8 @@ if args.model is None:
 # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
 checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") + args.model
 llm = LLM(model=checkpoint_path, dtype=args.dtype, cpu_offload_gb=args.cpu_offload_gb)
-tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
-sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=4096)
+tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, max_tokens=4096)
+sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p)
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
 
