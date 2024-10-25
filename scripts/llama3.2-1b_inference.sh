@@ -10,4 +10,4 @@ module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 source /home/pvharmo/llm-gha-eval/venv/bin/activate
 
 cd /home/pvharmo/llm-gha-eval/eval/
-python inference_vllm.py --model Llama-3.2-1B-Instruct --cpu-offload-gb 0
+python inference_vllm.py --model Llama-3.2-1B-Instruct --cpu-offload-gb 0 --disable_prefix_caching --disable_chunked_prefill
