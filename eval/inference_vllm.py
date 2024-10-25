@@ -9,7 +9,6 @@ import json
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
 
-
 import env
 
 parser = argparse.ArgumentParser()
@@ -17,6 +16,7 @@ parser.add_argument("--model", type=str)
 parser.add_argument("--top-p", type=float, default=0.8)
 parser.add_argument("-t", type=float, default=0.7)
 parser.add_argument("--cpu-offload-gb", type=float, default=10)
+parser.add_argument("--dtype", type=str, default="float16")
 parser.add_argument("--finetune", action=argparse.BooleanOptionalAction)
 args = parser.parse_args()
 
@@ -26,8 +26,8 @@ if args.model is None:
 
 # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
 checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") + args.model
-llm = LLM(model=checkpoint_path)
-tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, cpu_offload_gb=args.cpu_offload_gb)
+llm = LLM(model=checkpoint_path, dtype=args.dtype, cpu_offload_gb=args.cpu_offload_gb)
+tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
 sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=4096)
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
@@ -35,6 +35,11 @@ test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_toke
 example_per_level = 200
 unique_ids = list(set(test_dataset["id"]))[:200]
 test_dataset = test_dataset.filter(lambda example: example["id"] in unique_ids)
+
+results_path = f"{env.results_folder}/{args.model.replace('/','_')}-t{args.t}-top_p{args.top_p}{'-finetune' if args.finetune else ''}.jsonl"
+
+if os.path.exists(results_path):
+    os.remove(results_path)
 
 for level in ["level1", "level2", "level3", "level4", "level5"]:
     dataset = test_dataset.filter(lambda example: example["level"] == level).select(range(example_per_level))
@@ -46,11 +51,6 @@ for level in ["level1", "level2", "level3", "level4", "level5"]:
         tokenize=False,
         add_generation_prompt=True
     )})
-
-    results_path = f"{env.results_folder}/{args.model.replace('/','_')}-t{args.t}-top_p{args.top_p}{'-finetune' if args.finetune else ''}.jsonl"
-
-    if os.path.exists(results_path):
-        os.remove(results_path)
 
     outputs = llm.generate(dataset["tokens"], sampling_params, use_tqdm=True)
 
