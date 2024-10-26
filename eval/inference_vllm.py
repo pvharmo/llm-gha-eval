@@ -18,8 +18,8 @@ parser.add_argument("-t", type=float, default=0.7)
 parser.add_argument("--cpu-offload-gb", type=float, default=10)
 parser.add_argument("--dtype", type=str, default="float16")
 parser.add_argument("--finetune", action=argparse.BooleanOptionalAction)
-parser.add_argument("--disable_prefix_caching", action=argparse.BooleanOptionalAction, default=False)
-parser.add_argument("--disable_chunked_prefill", action=argparse.BooleanOptionalAction, default=False)
+parser.add_argument("--enable_prefix_caching", action=argparse.BooleanOptionalAction, default=False)
+parser.add_argument("--enable_chunked_prefill", action=argparse.BooleanOptionalAction, default=False)
 args = parser.parse_args()
 
 if args.model is None:
@@ -32,12 +32,12 @@ llm = LLM(
     model=checkpoint_path,
     dtype=args.dtype,
     cpu_offload_gb=args.cpu_offload_gb,
-    enable_prefix_caching=not args.disable_prefix_caching,
-    enable_chunked_prefill=not args.disable_chunked_prefill,
-    max_model_len=4096
+    enable_prefix_caching=args.enable_prefix_caching,
+    enable_chunked_prefill=args.enable_chunked_prefill,
+    max_model_len=8192
 )
-tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, max_tokens=4096)
-sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p)
+tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
+sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=8192)
 
 test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
 
