@@ -1,6 +1,4 @@
 import sys
-
-from finetuning.finetune import finetune
 sys.path.append('../')
 
 import os
@@ -59,7 +57,7 @@ test_dataset_level5 = test_dataset.filter(lambda example: example["level"] == "l
 
 dataset = concatenate_datasets([test_dataset_level1, test_dataset_level2, test_dataset_level3, test_dataset_level4, test_dataset_level5])
 
-results_path = f"{env.results_folder}/{args.model.replace('/','_')}-t{args.t}-top_p{args.top_p}{'-finetune' if args.finetune else ''}.jsonl"
+results_path = f"{env.results_folder}/{args.model.replace('/','_')}-t{args.t}-top_p{args.top_p}{'-' + args.finetune if args.finetune is not None else ''}.jsonl"
 
 if os.path.exists(results_path):
     os.remove(results_path)
@@ -98,3 +96,5 @@ with open(results_path, "a") as f:
 
         f.write(json_line)
         f.write("\n")
+
+print(f"Results saved to {results_path}")
