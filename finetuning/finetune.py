@@ -1,9 +1,11 @@
 import sys
+
+from dataset.load_dataset import format_dataset
 sys.path.append('../')
 import logging
-
+import argparse
 import datasets
-from datasets import load_dataset
+from datasets import DatasetDict, load_dataset
 from peft import LoraConfig
 import torch
 import transformers
@@ -59,7 +61,7 @@ Here is a sample config for deepspeed zero3:
     accelerate launch sample_finetune.py
 """
 
-def finetune(model, unk_pad_token=False):
+def finetune(model, nb_training_examples=3900, nb_epochs=1, unk_pad_token=False):
     logger = logging.getLogger(__name__)
 
 
@@ -74,15 +76,15 @@ def finetune(model, unk_pad_token=False):
         "logging_steps": 20,
         "logging_strategy": "steps",
         "lr_scheduler_type": "cosine",
-        "num_train_epochs": 1,
+        "num_train_epochs": nb_epochs,
         "max_steps": -1,
         "output_dir": f"{env.tmp_fodler}/{model}/checkpoints",
         "overwrite_output_dir": True,
         "per_device_eval_batch_size": 1,
         "per_device_train_batch_size": 1,
         "remove_unused_columns": True,
-        "save_steps": 100,
-        "save_total_limit": 1,
+        "save_steps": 500,
+        "save_total_limit": 10,
         "seed": 0,
         "gradient_checkpointing": True,
         "gradient_checkpointing_kwargs":{"use_reentrant": False},
@@ -152,39 +154,40 @@ def finetune(model, unk_pad_token=False):
     ##################
     # Data Processing
     ##################
-    def apply_chat_template(
-        example,
-        tokenizer,
-    ):
-        messages = [
-            {"role": "system", "content": example["system_prompt"]},
-            {"role": "user", "content": example["user_prompt"]},
-            {"role": "assistant", "content": example["answer"]}
-        ]
-        example["text"] = tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=False)
-        return example
+    # def apply_chat_template(
+    #     example,
+    #     tokenizer,
+    # ):
+    #     messages = [
+    #         {"role": "system", "content": example["system_prompt"]},
+    #         {"role": "user", "content": example["user_prompt"]},
+    #         {"role": "assistant", "content": example["answer"]}
+    #     ]
+    #     example["text"] = tokenizer.apply_chat_template(
+    #         messages, tokenize=False, add_generation_prompt=False)
+    #     return example
 
-    raw_dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)
-    train_dataset = raw_dataset["train"]
-    test_dataset = raw_dataset["validation"]
-    column_names = list(train_dataset.features)
+    train_dataset = format_dataset("train", nb_training_examples, True)
+    test_dataset = format_dataset("validation", 200, True)
+    # raw_dataset: DatasetDict = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)
+    # test_dataset = raw_dataset["validation"].select(range(1000))
+    # column_names = list(train_dataset.features)
 
-    processed_train_dataset = train_dataset.map(
-        apply_chat_template,
-        fn_kwargs={"tokenizer": tokenizer},
-        num_proc=10,
-        remove_columns=column_names,
-        desc="Applying chat template to train",
-    )
+    # processed_train_dataset = train_dataset.map(
+    #     apply_chat_template,
+    #     fn_kwargs={"tokenizer": tokenizer},
+    #     num_proc=10,
+    #     remove_columns=column_names,
+    #     desc="Applying chat template to train",
+    # )
 
-    processed_test_dataset = test_dataset.map(
-        apply_chat_template,
-        fn_kwargs={"tokenizer": tokenizer},
-        num_proc=10,
-        remove_columns=column_names,
-        desc="Applying chat template to validation",
-    )
+    # processed_test_dataset = test_dataset.map(
+    #     apply_chat_template,
+    #     fn_kwargs={"tokenizer": tokenizer},
+    #     num_proc=10,
+    #     remove_columns=column_names,
+    #     desc="Applying chat template to validation",
+    # )
 
 
     ###########
@@ -194,8 +197,8 @@ def finetune(model, unk_pad_token=False):
         model=model,
         args=train_conf,
         peft_config=peft_conf,
-        train_dataset=processed_train_dataset,
-        eval_dataset=processed_test_dataset,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,
         max_seq_length=2048,
         dataset_text_field="text",
         tokenizer=tokenizer,
@@ -213,7 +216,7 @@ def finetune(model, unk_pad_token=False):
     #############
     tokenizer.padding_side = 'left'
     metrics = trainer.evaluate()
-    metrics["eval_samples"] = len(processed_test_dataset)
+    metrics["eval_samples"] = len(test_dataset)
     trainer.log_metrics("eval", metrics)
     trainer.save_metrics("eval", metrics)
 
@@ -222,3 +225,13 @@ def finetune(model, unk_pad_token=False):
     # # Save model
     # ############
     trainer.save_model(train_conf.output_dir)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str)
+    parser.add_argument("--epochs", type=int)
+    parser.add_argument("--nb_examples", type=int)
+    parser.add_argument("--unk_pad_token", action=argparse.BooleanOptionalAction, default=False)
+    args = parser.parse_args()
+
+    finetune(args.model, args.nb_examples, args.epochs, args.unk_pad_token)

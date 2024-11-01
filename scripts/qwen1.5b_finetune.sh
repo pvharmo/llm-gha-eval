@@ -8,8 +8,7 @@
 module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 
 source /home/pvharmo/llm-gha-eval/venv/bin/activate
-mkdir $SLURM_TMPDIR/data
 mkdir -p /home/pvharmo/scratch/Qwen2.5-Coder-1.5B-Instruct/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning
-accelerate launch qwen_finetune.py --model qwen2.5-1.5b
+accelerate launch finetune.py --model Qwen2.5-Coder-1.5B-Instruct --nb_examples 1000 --epochs 3
