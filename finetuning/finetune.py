@@ -78,7 +78,7 @@ def finetune(model, nb_training_examples=3900, nb_epochs=1, unk_pad_token=False)
         "lr_scheduler_type": "cosine",
         "num_train_epochs": nb_epochs,
         "max_steps": -1,
-        "output_dir": f"{env.tmp_fodler}/{model}/checkpoints",
+        "output_dir": f"{env.tmp_fodler}/{model}/e{nb_epochs}-n{nb_training_examples}/checkpoints",
         "overwrite_output_dir": True,
         "per_device_eval_batch_size": 1,
         "per_device_train_batch_size": 1,
@@ -199,7 +199,7 @@ def finetune(model, nb_training_examples=3900, nb_epochs=1, unk_pad_token=False)
         peft_config=peft_conf,
         train_dataset=train_dataset,
         eval_dataset=test_dataset,
-        max_seq_length=2048,
+        max_seq_length=8192,
         dataset_text_field="text",
         tokenizer=tokenizer,
         packing=True
