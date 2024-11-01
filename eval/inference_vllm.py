@@ -1,4 +1,6 @@
 import sys
+
+from finetuning.finetune import finetune
 sys.path.append('../')
 
 import os
@@ -8,6 +10,7 @@ from datasets import Dataset, concatenate_datasets, load_dataset
 import json
 from tqdm import tqdm
 from vllm import LLM, SamplingParams
+from vllm.lora.request import LoRARequest
 
 import env
 
@@ -17,7 +20,7 @@ parser.add_argument("--top-p", type=float, default=0.8)
 parser.add_argument("-t", type=float, default=0.7)
 parser.add_argument("--cpu-offload-gb", type=float, default=10)
 parser.add_argument("--dtype", type=str, default="float16")
-parser.add_argument("--finetune", action=argparse.BooleanOptionalAction)
+parser.add_argument("--finetune", type=str, default=None)
 parser.add_argument("--enable_prefix_caching", action=argparse.BooleanOptionalAction, default=False)
 parser.add_argument("--enable_chunked_prefill", action=argparse.BooleanOptionalAction, default=False)
 args = parser.parse_args()
@@ -34,7 +37,8 @@ llm = LLM(
     cpu_offload_gb=args.cpu_offload_gb,
     enable_prefix_caching=args.enable_prefix_caching,
     enable_chunked_prefill=args.enable_chunked_prefill,
-    max_model_len=8192
+    max_model_len=8192,
+    enable_lora=args.finetune is not None,
 )
 tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
 sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=8192)
@@ -67,7 +71,19 @@ dataset = dataset.map(lambda example: {"tokens":tokenizer.apply_chat_template(
     add_generation_prompt=True
 )})
 
-outputs = llm.generate(dataset["tokens"], sampling_params, use_tqdm=True)
+if args.finetune is not None:
+    outputs = llm.generate(
+        dataset["tokens"],
+        sampling_params,
+        use_tqdm=True,
+        lora_request=LoRARequest("lora_adapter", 1, args.finetune)
+    )
+else:
+    outputs = llm.generate(
+        dataset["tokens"],
+        sampling_params,
+        use_tqdm=True,
+    )
 
 with open(results_path, "a") as f:
     for example, output in tqdm(zip(dataset, outputs)):
