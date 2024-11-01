@@ -30,7 +30,9 @@ if args.model is None:
     exit()
 
 # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
-checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") + args.model
+checkpoint_path = env.models_folder + "/" + args.model
+lora_path = env.models_folder + "/finetunes/" + args.model + "/" + args.finetune
+
 llm = LLM(
     model=checkpoint_path,
     dtype=args.dtype,
@@ -76,7 +78,7 @@ if args.finetune is not None:
         dataset["tokens"],
         sampling_params,
         use_tqdm=True,
-        lora_request=LoRARequest("lora_adapter", 1, args.finetune)
+        lora_request=LoRARequest("lora_adapter", 1, lora_path)
     )
 else:
     outputs = llm.generate(
