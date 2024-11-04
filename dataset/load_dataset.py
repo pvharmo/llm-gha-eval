@@ -23,7 +23,7 @@ datasets.logging.set_verbosity_warning()
 #         raise TypeError("The dataset is not a valid dataset object")
 
 def format_dataset(split, examples_per_level, with_answers=False):
-    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
+    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)[split]
 
     example_per_level = 200
     unique_ids = list(set(dataset["id"]))[:200]

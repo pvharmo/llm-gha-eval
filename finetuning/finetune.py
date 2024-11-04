@@ -1,7 +1,7 @@
 import sys
+sys.path.append('../')
 
 from dataset.load_dataset import format_dataset
-sys.path.append('../')
 import logging
 import argparse
 import datasets
