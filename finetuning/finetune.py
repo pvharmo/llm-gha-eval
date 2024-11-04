@@ -154,18 +154,13 @@ def finetune(model, nb_training_examples=3900, nb_epochs=1, unk_pad_token=False)
     ##################
     # Data Processing
     ##################
-    # def apply_chat_template(
-    #     example,
-    #     tokenizer,
-    # ):
-    #     messages = [
-    #         {"role": "system", "content": example["system_prompt"]},
-    #         {"role": "user", "content": example["user_prompt"]},
-    #         {"role": "assistant", "content": example["answer"]}
-    #     ]
-    #     example["text"] = tokenizer.apply_chat_template(
-    #         messages, tokenize=False, add_generation_prompt=False)
-    #     return example
+    def apply_chat_template(
+        example,
+        tokenizer,
+    ):
+        example["text"] = tokenizer.apply_chat_template(
+            example["text"], tokenize=False, add_generation_prompt=False)
+        return example
 
     train_dataset = format_dataset("train", nb_training_examples, True)
     test_dataset = format_dataset("validation", 200, True)
@@ -173,21 +168,19 @@ def finetune(model, nb_training_examples=3900, nb_epochs=1, unk_pad_token=False)
     # test_dataset = raw_dataset["validation"].select(range(1000))
     # column_names = list(train_dataset.features)
 
-    # processed_train_dataset = train_dataset.map(
-    #     apply_chat_template,
-    #     fn_kwargs={"tokenizer": tokenizer},
-    #     num_proc=10,
-    #     remove_columns=column_names,
-    #     desc="Applying chat template to train",
-    # )
+    processed_train_dataset = train_dataset.map(
+        apply_chat_template,
+        fn_kwargs={"tokenizer": tokenizer},
+        num_proc=10,
+        desc="Applying chat template to train",
+    )
 
-    # processed_test_dataset = test_dataset.map(
-    #     apply_chat_template,
-    #     fn_kwargs={"tokenizer": tokenizer},
-    #     num_proc=10,
-    #     remove_columns=column_names,
-    #     desc="Applying chat template to validation",
-    # )
+    processed_test_dataset = test_dataset.map(
+        apply_chat_template,
+        fn_kwargs={"tokenizer": tokenizer},
+        num_proc=10,
+        desc="Applying chat template to validation",
+    )
 
 
     ###########
@@ -197,8 +190,8 @@ def finetune(model, nb_training_examples=3900, nb_epochs=1, unk_pad_token=False)
         model=model,
         args=train_conf,
         peft_config=peft_conf,
-        train_dataset=train_dataset,
-        eval_dataset=test_dataset,
+        train_dataset=processed_train_dataset,
+        eval_dataset=processed_test_dataset,
         max_seq_length=8192,
         dataset_text_field="text",
         tokenizer=tokenizer,

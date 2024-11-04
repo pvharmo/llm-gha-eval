@@ -2,7 +2,7 @@ import sys
 sys.path.append('..')
 
 import datasets
-from env import dataset_directory
+import env
 from datasets import DatasetDict, Dataset, load_dataset, concatenate_datasets
 
 datasets.logging.set_verbosity_warning()
