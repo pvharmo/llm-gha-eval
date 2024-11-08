@@ -25,15 +25,14 @@ datasets.logging.set_verbosity_warning()
 def format_dataset(split, examples_per_level, with_answers=False):
     dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)[split]
 
-    example_per_level = 200
-    unique_ids = list(set(dataset["id"]))[:200]
+    unique_ids = list(set(dataset["id"]))[:examples_per_level]
     dataset = dataset.filter(lambda example: example["id"] in unique_ids)
 
-    dataset_level1 = dataset.filter(lambda example: example["level"] == "level1").select(range(example_per_level))
-    dataset_level2 = dataset.filter(lambda example: example["level"] == "level2").select(range(example_per_level))
-    dataset_level3 = dataset.filter(lambda example: example["level"] == "level3").select(range(example_per_level))
-    dataset_level4 = dataset.filter(lambda example: example["level"] == "level4").select(range(example_per_level))
-    dataset_level5 = dataset.filter(lambda example: example["level"] == "level5").select(range(example_per_level))
+    dataset_level1 = dataset.filter(lambda example: example["level"] == "level1").select(range(examples_per_level))
+    dataset_level2 = dataset.filter(lambda example: example["level"] == "level2").select(range(examples_per_level))
+    dataset_level3 = dataset.filter(lambda example: example["level"] == "level3").select(range(examples_per_level))
+    dataset_level4 = dataset.filter(lambda example: example["level"] == "level4").select(range(examples_per_level))
+    dataset_level5 = dataset.filter(lambda example: example["level"] == "level5").select(range(examples_per_level))
 
     dataset = concatenate_datasets([dataset_level1, dataset_level2, dataset_level3, dataset_level4, dataset_level5])
 

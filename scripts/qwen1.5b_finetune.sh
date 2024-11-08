@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --gres=gpu:2       # Request GPU "generic resources"
+#SBATCH --gres=gpu:1       # Request GPU "generic resources"
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=32000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-16:00
@@ -12,4 +12,4 @@ source /home/pvharmo/llm-gha-eval/venv/bin/activate
 mkdir -p /home/pvharmo/scratch/Qwen2.5-Coder-1.5B-Instruct/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning
-accelerate launch finetune.py --model Qwen2.5-Coder-1.5B-Instruct --nb_examples $((1000 * $SLURM_ARRAY_TASK_ID)) --epochs 1
+python finetune.py --model Qwen2.5-Coder-1.5B-Instruct --nb_examples $((1000 * $SLURM_ARRAY_TASK_ID)) --epochs 1

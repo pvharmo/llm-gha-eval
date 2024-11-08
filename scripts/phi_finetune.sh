@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --gres=gpu:2       # Request GPU "generic resources"
+#SBATCH --gres=gpu:1       # Request GPU "generic resources"
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=32000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-12:00
@@ -12,4 +12,4 @@ mkdir $SLURM_TMPDIR/data
 mkdir -p /home/pvharmo/scratch/Phi-3.5-mini-instruct/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning/
-accelerate launch phi_finetune.py
+python phi_finetune.py
