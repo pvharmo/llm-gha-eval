@@ -1,0 +1,25 @@
+name: Build Focal Container
+
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "samples/**"
+      - "**.md"
+  push:
+    branches:
+      - master
+      - release/oss-v*
+    tags:
+      - oss-v*
+    paths-ignore:
+      - "docs/**"
+      - "samples/**"
+      - "**.md"
+
+jobs:
+  build-container:
+    uses: EventStore/EventStore/.github/workflows/build-container-reusable.yml@d274d7d528800d72cfac3d496dc747fba5208ff3
+    with:
+      container-runtime: focal
+
