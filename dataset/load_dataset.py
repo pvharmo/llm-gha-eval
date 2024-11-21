@@ -25,9 +25,11 @@ datasets.logging.set_verbosity_warning()
 def format_dataset(split, examples_per_level=None, with_answers=False, tokens_limit=1024, system_prompt=None):
     dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)[split]
 
+    dataset = dataset.filter(lambda example: example["yaml_tokens_count"] <= tokens_limit)
+
     unique_ids = sorted(list(set(dataset["id"])))
     unique_ids = unique_ids if examples_per_level is None else unique_ids[:examples_per_level]
-    dataset = dataset.filter(lambda example: (example["id"] in unique_ids and example["yaml_tokens_count"] <= tokens_limit))
+    dataset = dataset.filter(lambda example: example["id"] in unique_ids)
 
     if examples_per_level is not None:
         dataset_level1 = dataset.filter(lambda example: example["level"] == "level1").select(range(examples_per_level))
