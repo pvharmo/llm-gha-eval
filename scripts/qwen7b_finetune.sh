@@ -4,6 +4,8 @@
 #SBATCH --mem=32000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-23:00
 #SBATCH --output=%N-%j.out
+#SBATCH --mail-user=jonathan.caron-roberge.1@ulaval.ca
+#SBATCH --mail-type=ALL
 
 module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 

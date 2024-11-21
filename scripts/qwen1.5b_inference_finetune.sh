@@ -5,6 +5,8 @@
 #SBATCH --time=0-6:00
 #SBATCH --output=inference_finetune_qwen1.5b_%A_%N-%j.out
 #SBATCH --array=1-3
+#SBATCH --mail-user=jonathan.caron-roberge.1@ulaval.ca
+#SBATCH --mail-type=ALL
 
 module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 
