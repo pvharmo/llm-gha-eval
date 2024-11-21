@@ -21,7 +21,7 @@ encoding = tiktoken.encoding_for_model("gpt-4o-mini")
 
 # To take advantage of the free tokens offered by OpenAI, we split the training dataset
 # into 5 parts and fine-tune the model on each part for 5 days.
-i = (datetime.now().day - 18) % 5
+i = (datetime.now().day - 19) % 6
 dataset = pl.read_ndjson(f"../dataset/train_parts/train_{i}.jsonl")
 tokens_count = 0
 for row in dataset.iter_rows(named=True):
