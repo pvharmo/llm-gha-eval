@@ -1,6 +1,6 @@
-import polars as pl
 from tqdm import tqdm
 import json
+from transformers import AutoTokenizer
 
 
 levels = ["level1", "level2", "level3", "level4", "level5"]
@@ -8,19 +8,21 @@ types = ["finetuning", "validation", "testing"]
 
 all_conversations = []
 
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-Coder-1.5B-Instruct")
+
 for type in types:
-    docs = pl.read_json(f"../dataset/intermediate/{type}.json")
+    docs = json.load(open(f"../dataset/intermediate/{type}.json"))
     with open(f"../dataset/{type}.jsonl", "w") as f_all:
         for level in levels:
             conversations = []
-            for doc in tqdm(docs.iter_rows(named=True)):
-                system_promtp = "You are an expert devops engineer. Please generate a YAML file based on the user's input below. No additional explanation is needed. The output format should be ```yaml <Workflow>```."
+            for doc in tqdm(docs):
                 conversation = {
                     "id": doc["id"],
+                    "group": doc["combination_group"],
                     "level": level,
-                    "system_prompt": system_promtp,
                     "user_prompt": doc["info"][level],
-                    "answer": "```yaml " + doc["yaml"] + "```"
+                    "answer": "```yaml " + doc["yaml"] + "```",
+                    "yaml_tokens_count": len(tokenizer.encode(doc["yaml"]))
                 }
 
                 json.dump(conversation, f_all)
