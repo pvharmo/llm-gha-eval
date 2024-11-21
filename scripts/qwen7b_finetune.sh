@@ -9,7 +9,7 @@
 
 module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 
-source /home/pvharmo/llm-gha-eval/venv/bin/activate
+source /home/pvharmo/projects/def-masai45/pvharmo/venv/bin/activate
 mkdir -p /home/pvharmo/scratch/Qwen2.5-Coder-7B-Instruct/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning

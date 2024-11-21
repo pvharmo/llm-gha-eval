@@ -9,8 +9,7 @@
 
 module load python/3.12.4 scipy-stack gcc arrow/17.0.0 cuda cudnn
 
-source /home/pvharmo/llm-gha-eval/venv/bin/activate
-mkdir $SLURM_TMPDIR/data
+source /home/pvharmo/projects/def-masai45/pvharmo/venv/bin/activate
 mkdir -p /home/pvharmo/scratch/CodeLlama-7b-Instruct-hf/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning/
