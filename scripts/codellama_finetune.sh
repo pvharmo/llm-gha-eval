@@ -13,4 +13,4 @@ source /home/pvharmo/projects/def-masai45/pvharmo/venv/bin/activate
 mkdir -p /home/pvharmo/scratch/CodeLlama-7b-Instruct-hf/checkpoints
 
 cd /home/pvharmo/llm-gha-eval/finetuning/
-python codellama_finetune.py
+python finetune.py --model CodeLlama-7b-Instruct-hf --nb_examples 5000 --epochs 1

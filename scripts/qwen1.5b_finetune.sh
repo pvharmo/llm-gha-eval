@@ -4,7 +4,7 @@
 #SBATCH --mem=32000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-16:00
 #SBATCH --output=finetune_qwen-1.5_%N-%j.out
-#SBATCH --array=1,5,10,30,60,90
+#SBATCH --array=1,5,10,30,55,85
 #SBATCH --mail-user=jonathan.caron-roberge.1@ulaval.ca
 #SBATCH --mail-type=ALL
 
