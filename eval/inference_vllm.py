@@ -8,7 +8,7 @@ model, finetune, sampling_params, cpu_offload_gb = parse_args()
 
 llm, tokenizer, lora_request = load_model(model, finetune, cpu_offload_gb)
 
-dataset = format_dataset("test", 10, False)
+dataset = format_dataset("test", 200, False)
 dataset = apply_chat_template(dataset, tokenizer)
 
 outputs = generate(
