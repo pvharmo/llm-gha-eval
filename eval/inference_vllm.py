@@ -1,29 +1,20 @@
-from utils import init, generate
-import json
+import sys
+sys.path.append('../')
 
-llm, sampling_params, tokenizer, dataset, results_path, lora_request = init()
+from inference import parse_args, generate, load_model, apply_chat_template
+from dataset.load_dataset import format_dataset
 
-dataset = dataset.map(lambda example: {"tokens": tokenizer.apply_chat_template(
-    [
-        {"role": "system", "content": example["system_prompt"]},
-        {"role": "user", "content": example["user_prompt"]}
-    ],
-    tokenize=False,
-    add_generation_prompt=True
-)})
+model, finetune, sampling_params, cpu_offload_gb = parse_args()
 
-outputs = generate(llm, dataset, sampling_params, "test", lora_request)
+llm, tokenizer, lora_request = load_model(model, finetune, cpu_offload_gb)
 
-with open(results_path, "a") as f:
-    for example, output in zip(dataset, outputs):
-        json_line = json.dumps({
-            "id": example["id"],
-            "level": example["level"],
-            "llm_response": output.outputs[0].text,
-            "answer": example["answer"]
-        })
+dataset = format_dataset("test", 10, False)
+dataset = apply_chat_template(dataset, tokenizer)
 
-        f.write(json_line)
-        f.write("\n")
-
-print(f"Results saved to {results_path}")
+outputs = generate(
+    llm,
+    dataset,
+    sampling_params,
+    f"{model.replace('/', '_')}-t{sampling_params.temperature}-top_p{sampling_params.top_p}{'-' + finetune if finetune is not None else ''}",
+    lora_request
+)

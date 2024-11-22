@@ -3,7 +3,7 @@ sys.path.append('..')
 
 import datasets
 import env
-from datasets import DatasetDict, Dataset, load_dataset, concatenate_datasets
+from datasets import Dataset, load_dataset, concatenate_datasets
 
 datasets.logging.set_verbosity_warning()
 
@@ -23,7 +23,7 @@ datasets.logging.set_verbosity_warning()
 #         raise TypeError("The dataset is not a valid dataset object")
 
 def format_dataset(split, examples_per_level=None, with_answers=False, tokens_limit=1024, system_prompt=None):
-    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)[split]
+    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)[split]  # type: ignore
 
     dataset = dataset.filter(lambda example: example["yaml_tokens_count"] <= tokens_limit)
 
@@ -60,8 +60,8 @@ def format_dataset(split, examples_per_level=None, with_answers=False, tokens_li
         })
 
 def load_per_group(split, examples_per_group, with_answers=False):
-    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)
-    dataset = concatenate_datasets([dataset["train"], dataset["validation"], dataset["test"]])
+    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)  # type: ignore
+    dataset = concatenate_datasets([dataset["train"], dataset["validation"], dataset["test"]])  # type: ignore
     unique_groups = sorted(list(set(dataset["group"])))
     dataset_level1 = dataset.filter(lambda example: example["level"] == "level1")
     groups = {}

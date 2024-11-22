@@ -1,85 +1,85 @@
 import sys
+
 sys.path.append('../')
 
 import os
 import argparse
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from datasets import Dataset, concatenate_datasets, load_dataset
+from transformers import AutoTokenizer
 import json
 from tqdm import tqdm
+from vllm import LLM, SamplingParams  # type: ignore
+from vllm.lora.request import LoRARequest  # type: ignore
 
 import env
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str)
-parser.add_argument("--finetune", action=argparse.BooleanOptionalAction)
-args = parser.parse_args()
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--model", type=str)
+    parser.add_argument("--top-p", type=float, default=0.8)
+    parser.add_argument("-t", type=float, default=0.7)
+    parser.add_argument("--cpu-offload-gb", type=float, default=10)
+    parser.add_argument("--finetune", type=str, default=None)
+    args = parser.parse_args()
 
-if args.model is None:
-    print("You need to specify the model to fine-tune.")
-    exit()
+    if args.model is None:
+        print("You need to specify the model.")
+        exit()
 
-# checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
-checkpoint_path = env.models_folder + ("/finetunes/" if args.finetune else "/") + args.model
+    sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=8192)
 
-print("Loading model ", checkpoint_path)
+    return args.model, args.finetune, sampling_params, args.cpu_offload_gb
 
-model = AutoModelForCausalLM.from_pretrained(
-    checkpoint_path,
-    torch_dtype="auto",
-    device_map="auto"
-)
-tokenizer = AutoTokenizer.from_pretrained(checkpoint_path, padding_side='left')
+def load_model(model, finetune=None, cpu_offload_gb=10):
+    # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
+    checkpoint_path = env.models_folder + "/" + model
 
-test_dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)["test"]
+    lora_path = (env.models_folder + "/finetunes/" + model + "/" + finetune) if finetune is not None else None
 
-example_per_level = 200
-unique_ids = list(set(test_dataset["id"]))[:200]
-test_dataset = test_dataset.filter(lambda example: example["id"] in unique_ids)
+    llm = LLM(
+        model=checkpoint_path,
+        dtype="bfloat16",
+        cpu_offload_gb=cpu_offload_gb,
+        max_model_len=8192,
+        enable_lora=finetune is not None,
+    )
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
 
-test_dataset_level1 = test_dataset.filter(lambda example: example["level"] == "level1").select(range(example_per_level))
-test_dataset_level2 = test_dataset.filter(lambda example: example["level"] == "level2").select(range(example_per_level))
-test_dataset_level3 = test_dataset.filter(lambda example: example["level"] == "level3").select(range(example_per_level))
-test_dataset_level4 = test_dataset.filter(lambda example: example["level"] == "level4").select(range(example_per_level))
-test_dataset_level5 = test_dataset.filter(lambda example: example["level"] == "level5").select(range(example_per_level))
+    lora_request = LoRARequest("lora_adapter", 1, lora_path) if lora_path is not None else None
 
-test_dataset = concatenate_datasets([test_dataset_level1, test_dataset_level2, test_dataset_level3, test_dataset_level4, test_dataset_level5])
+    return llm, tokenizer, lora_request
 
-results_path = f"{env.results_folder}/{args.model.replace('/','_')}.jsonl"
-
-if os.path.exists(results_path):
-    os.remove(results_path)
-
-for example in tqdm(test_dataset):
-    messages = [
-        {"role": "system", "content": example["system_prompt"]},
-        {"role": "user", "content": example["user_prompt"]}
-    ]
-
-    text = tokenizer.apply_chat_template(
-        messages,
+def apply_chat_template(dataset, tokenizer):
+    return dataset.map(lambda example: {"tokens": tokenizer.apply_chat_template(
+        example["text"],
         tokenize=False,
         add_generation_prompt=True
+    )})
+
+def generate(llm, dataset, sampling_params, id, lora_request=None):
+    outputs = llm.generate(
+        dataset["tokens"],
+        sampling_params,
+        use_tqdm=True,
+        lora_request=lora_request
     )
-    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
 
-    generated_ids = model.generate(
-        **model_inputs,
-        max_new_tokens=4096
-    )
-    generated_ids = [
-        output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-    ]
+    results_path = f"{env.results_folder}/{id}.jsonl"
 
-    response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-
-    json_line = json.dumps({
-        "id": example["id"],
-        "level": example["level"],
-        "llm_response": response,
-        "answer": example["answer"]
-    })
+    if os.path.exists(results_path):
+        os.remove(results_path)
 
     with open(results_path, "a") as f:
-        f.write(json_line)
-        f.write("\n")
+        for example, output in tqdm(zip(dataset, outputs)):
+            json_line = json.dumps({
+                "id": example["id"],
+                "level": example["level"],
+                "llm_response": output.outputs[0].text,
+                "answer": example["answer"]
+            })
+
+            f.write(json_line)
+            f.write("\n")
+
+    print(f"Results saved to {results_path}")
+
+    return outputs
