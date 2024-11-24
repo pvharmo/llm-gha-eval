@@ -31,7 +31,7 @@ outputs2 = generate(
 
 outputs = []
 
-system_prompt = "You are an expert devops engineer. You will be provided two workflow and a prompt. You must determine which workflow is the best fit for the prompt. Explain your reasoning before choosing the best fit."
+system_prompt = "You are an expert devops engineer. You will be provided two workflow and a prompt. You must determine which workflow is the best fit for the prompt. Explain your reasoning before choosing the best fit. Give your answer in the following format: 'I choose workflow {workflow number}.'"
 
 for row1, row2 in zip(outputs1, outputs2):
     if detect_infinite_loop(outputs1) or detect_infinite_loop(outputs2):
