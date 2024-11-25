@@ -9,7 +9,7 @@ from finetuning_utils import load_model, config
 import env
 
 def finetune(model, nb_training_examples=None, nb_epochs=1, dataset=None, split="generator_train"):
-    output_dir = f"{env.tmp_fodler}/{model}/e{nb_epochs}-n{nb_training_examples if nb_training_examples is not None else "All"}",
+    output_dir = f"{env.tmp_fodler}/{model}/e{nb_epochs}-n{nb_training_examples if nb_training_examples is not None else "All"}"
     train_conf, peft_conf = config(output_dir, nb_epochs)
     model, tokenizer = load_model(model)
 
