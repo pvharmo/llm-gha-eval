@@ -23,7 +23,7 @@ datasets.logging.set_verbosity_warning()
 #         raise TypeError("The dataset is not a valid dataset object")
 
 def format_dataset(split, examples_per_level=None, with_answers=False, tokens_limit=1024, system_prompt=None):
-    dataset: Dataset = load_dataset("pvharmo/llm-gha", token=env.hf_access_token)[split]  # type: ignore
+    dataset: Dataset = load_dataset("pvharmo/llm-gha", split=split, token=env.hf_access_token)  # type: ignore
 
     dataset = dataset.filter(lambda example: example["yaml_tokens_count"] <= tokens_limit)
 
@@ -44,19 +44,23 @@ def format_dataset(split, examples_per_level=None, with_answers=False, tokens_li
         system_prompt = "You are an expert devops engineer. Please generate a YAML file based on the user's input below. No additional explanation is needed. The output format should be ```yaml <Workflow>```."
 
     if with_answers:
-        return dataset.map(lambda example: {"text":
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": example["user_prompt"]},
-                {"role": "assistant", "content": example["answer"]}
-            ],
+        return dataset.map(lambda example: {
+            "text":
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": example["user_prompt"]},
+                    {"role": "assistant", "content": example["answer"]}
+                ],
+            "prompt": example["user_prompt"],
         })
     else:
-        return dataset.map(lambda example: {"text":
-            [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": example["user_prompt"]}
-            ],
+        return dataset.map(lambda example: {
+            "text":
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": example["user_prompt"]}
+                ],
+            "prompt": example["user_prompt"],
         })
 
 def load_per_group(split, examples_per_group, with_answers=False):
