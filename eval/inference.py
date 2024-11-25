@@ -6,7 +6,6 @@ import os
 import argparse
 from transformers import AutoTokenizer
 import json
-from tqdm import tqdm
 from vllm import LLM, SamplingParams  # type: ignore
 from vllm.lora.request import LoRARequest  # type: ignore
 
@@ -63,19 +62,22 @@ def generate(llm, dataset, sampling_params, id, lora_request=None):
         lora_request=lora_request
     )
 
+    outputs = [{
+        "id": example["id"],
+        "level": example["level"],
+        "llm_response": output.outputs[0].text,
+        "answer": example["answer"],
+        "prompt": example["prompt"]
+    } for example, output in zip(dataset, outputs)]
+
     results_path = f"{env.results_folder}/{id}.jsonl"
 
     if os.path.exists(results_path):
         os.remove(results_path)
 
     with open(results_path, "a") as f:
-        for example, output in tqdm(zip(dataset, outputs)):
-            json_line = json.dumps({
-                "id": example["id"],
-                "level": example["level"],
-                "llm_response": output.outputs[0].text,
-                "answer": example["answer"]
-            })
+        for output in outputs:
+            json_line = json.dumps(output)
 
             f.write(json_line)
             f.write("\n")

@@ -17,7 +17,7 @@ outputs1 = generate(
     llm,
     dataset,
     sampling_params,
-    f"corrector/{model.replace('/', '_')}-t{sampling_params.temperature}-top_p{sampling_params.top_p}{'-' + finetune if finetune is not None else ''}-intermediate-1",
+    f"corrector/{model.replace('/', '_')}-t{sampling_params.temperature}-top_p{sampling_params.top_p}{'-' + finetune if finetune is not None else ''}-intermediate",
     lora_request
 )
 
@@ -31,7 +31,7 @@ for row in outputs1:
     new_row = {
         "text": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"prompt: {outputs1['prompt']}\n\nworkflow: {row['llm_response']}"},
+            {"role": "user", "content": f"prompt: {row['prompt']}\n\nworkflow: {row['llm_response']}"},
         ],
     }
     outputs.append(new_row)

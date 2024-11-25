@@ -39,7 +39,7 @@ for row1, row2 in zip(outputs1, outputs2):
     row = {
         "text": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"prompt: {outputs1['prompt']}\n\nworkflow 1: {row1['llm_response']}\n\n---\n\nworkflow 2: {row2['llm_response']}"},
+            {"role": "user", "content": f"prompt: {row1['prompt']}\n\nworkflow 1: {row1['llm_response']}\n\n---\n\nworkflow 2: {row2['llm_response']}"},
         ],
     }
     outputs.append(row)
