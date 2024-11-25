@@ -37,6 +37,10 @@ for row1, row2 in zip(outputs1, outputs2):
     if detect_infinite_loop(row1["llm_response"]) or detect_infinite_loop(row2["llm_response"]):
         continue
     row = {
+        "id": row1["id"],
+        "level": row1["level"],
+        "answer": row1["answer"],
+        "prompt": row1["prompt"],
         "text": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": f"prompt: {row1['prompt']}\n\nworkflow 1: {row1['llm_response']}\n\n---\n\nworkflow 2: {row2['llm_response']}"},
