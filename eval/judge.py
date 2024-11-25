@@ -34,12 +34,12 @@ outputs = []
 system_prompt = "You are an expert devops engineer. You will be provided two workflow and a prompt. You must determine which workflow is the best fit for the prompt. Explain your reasoning before choosing the best fit. Give your answer in the following format: 'I choose workflow {workflow number}.'"
 
 for row1, row2 in zip(outputs1, outputs2):
-    if detect_infinite_loop(outputs1) or detect_infinite_loop(outputs2):
+    if detect_infinite_loop(row1["llm_response"]) or detect_infinite_loop(row2["llm_response"]):
         continue
     row = {
         "text": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"prompt: {outputs1["prompt"]}\n\nworkflow 1: {row1['text']}\n\n---\n\nworkflow 2: {row2['text']}"},
+            {"role": "user", "content": f"prompt: {outputs1['prompt']}\n\nworkflow 1: {row1['llm_response']}\n\n---\n\nworkflow 2: {row2['llm_response']}"},
         ],
     }
     outputs.append(row)
