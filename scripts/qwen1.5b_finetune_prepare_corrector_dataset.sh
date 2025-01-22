@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
 #SBATCH --mem=32000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-6:00
-#SBATCH --output=inference_judge_base_qwen1.5b_%A_%N-%j.out
+#SBATCH --output=finetune_prepare_corrector_dataset.5b_%A_%N-%j.out
 #SBATCH --mail-user=jonathan.caron-roberge.1@ulaval.ca
 #SBATCH --mail-type=ALL
 
