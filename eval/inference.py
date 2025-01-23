@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument("-t", type=float, default=0.7)
     parser.add_argument("--cpu-offload-gb", type=float, default=10)
     parser.add_argument("--finetune", type=str, default=None)
+    parser.add_argument("--tokenizer", type=str, default=None)
     args = parser.parse_args()
 
     if args.model is None:
@@ -26,11 +27,12 @@ def parse_args():
 
     sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=8192)
 
-    return args.model, args.finetune, sampling_params, args.cpu_offload_gb
+    return args.model, args.finetune, sampling_params, args.cpu_offload_gb, args.tokenizer
 
-def load_model(model, finetune=None, cpu_offload_gb=10):
+def load_model(model, finetune=None, cpu_offload_gb=10, tokenizer=None):
     # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
     checkpoint_path = env.models_folder + "/" + model
+    tokenizer_path = env.models_folder + "/" + (model if tokenizer is None else tokenizer)
 
     lora_path = (env.models_folder + "/finetunes/" + model + "/" + finetune) if finetune is not None else None
 
@@ -41,7 +43,7 @@ def load_model(model, finetune=None, cpu_offload_gb=10):
         max_model_len=8192,
         enable_lora=finetune is not None,
     )
-    tokenizer = AutoTokenizer.from_pretrained(checkpoint_path)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
     lora_request = LoRARequest("lora_adapter", 1, lora_path) if lora_path is not None else None
 
