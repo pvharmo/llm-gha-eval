@@ -38,10 +38,12 @@ def load_model(model, finetune=None, cpu_offload_gb=10, tokenizer=None):
 
     llm = LLM(
         model=checkpoint_path,
+        tokenizer=tokenizer_path,
         dtype="bfloat16",
         cpu_offload_gb=cpu_offload_gb,
         max_model_len=8192,
         enable_lora=finetune is not None,
+
     )
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
