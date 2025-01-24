@@ -1,0 +1,27 @@
+{
+  "level1": { "score": 0, "valid_count": 0, "errors": 0, "total": 0 },
+  "level2": {
+    "score": 0,
+    "valid_count": 0,
+    "errors": 0,
+    "total": 0
+  },
+  "level3": {
+    "score": 0,
+    "valid_count": 0,
+    "errors": 0,
+    "total": 0
+  },
+  "level4": {
+    "score": 0,
+    "valid_count": 0,
+    "errors": 0,
+    "total": 0
+  },
+  "level5": {
+    "score": 0,
+    "valid_count": 0,
+    "errors": 0,
+    "total": 0
+  }
+}

@@ -1,0 +1,35 @@
+qwen:
+  CodeLlama-7b-Instruct-hf-t0.7-top_p0.8: CodeLlama7b
+  CodeLlama-7b-Instruct-hf_ft_merged-t0.7-top_p0.8: CodeLlama7b finetuned
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: original
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n100: 100
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n500: 500
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n1000: 1000
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n3000: 3000
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n5500: 5500
+  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n8500: 8500
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8: 7B base
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 1.5B
+  Qwen2.5-Coder-3B-Instruct-t0.7-top_p0.8-e2-nAll: 3B
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: 7B
+
+size-comparison:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 1.5B
+  Qwen2.5-Coder-3B-Instruct-t0.7-top_p0.8-e2-nAll: 3B
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: 7B
+
+proposition:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: base
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n100: 100
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n1000: 1000
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll: 10000
+
+judge:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-judge: judge-base
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-judge-intermediate-1: base-1
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-judge-intermediate-2: base-2
+
+judge-ft-generator:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll-judge: judge-ft-generator
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll-judge-intermediate-1: base-1
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll-judge-intermediate-2: base-2
