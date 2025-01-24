@@ -2,8 +2,6 @@ tmp
 env.py
 outputs/*
 !outputs/.gitkeep
-results/*
-!results/.gitkeep
 dataset/*
 !dataset/.gitkeep
 !dataset/load_dataset.py
