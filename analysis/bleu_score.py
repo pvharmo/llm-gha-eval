@@ -1,20 +1,18 @@
 import sys
-sys.path.append('../..')
+sys.path.append('../')
 
 import os
 import json
 import polars as pl
-# type: ignore
-from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.bleu_score import sentence_bleu  # type: ignore
 import re
 
-from dataset.load_dataset import load_dataset
 from extract_yaml import extract_yaml, detect_infinite_loop
 import env
 
 import argparse
 
-def bleu_score(model):
+def bleu_score(model, results=None):
     def i_bleu_score(reference: str, candidate: str) -> float:
         if candidate is None:
             return 0.0
@@ -36,7 +34,8 @@ def bleu_score(model):
         non_empty_lines = [line for line in lines if line.strip()]
         return '\n'.join(non_empty_lines)
 
-    results = pl.read_ndjson(env.results_folder + "/" + model + ".jsonl")
+    if results is None:
+        results = pl.read_ndjson(env.results_folder + "/" + model + ".jsonl")
 
     levels = {
         "level1": { "score": 0.0, "count": 0, },

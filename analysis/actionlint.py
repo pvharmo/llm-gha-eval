@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../..')
+sys.path.append('../')
 
 import os
 import argparse
@@ -10,30 +10,32 @@ import polars as pl
 import env
 from extract_yaml import extract_yaml, detect_infinite_loop
 
-def actionlint(model):
-    def action_validator(workflow):
-        if workflow is None:
-            return None
-        with open('../../tmp/test.yml', 'w') as file:
-            file.write(workflow)
+def action_validator(workflow):
+    if workflow is None:
+        return None
+    with open('../tmp/test.yml', 'w') as file:
+        file.write(workflow)
 
-        output = subprocess.run(["actionlint", "-format", "'{{json .}}'", "../../tmp/test.yml"], text=True, capture_output=True).stdout
+    output = subprocess.run(["actionlint", "-format", "'{{json .}}'", "../tmp/test.yml"], text=True, capture_output=True).stdout
 
-        json_output = json.loads(output[1:-1])
+    json_output = json.loads(output[1:-1])
 
-        for values in json_output:
-            if values["kind"] == "syntax-check":
-                return {
-                    "valid": False,
-                    "output": json_output,
-                }
+    for values in json_output:
+        if values["kind"] == "syntax-check":
+            return {
+                "valid": False,
+                "output": json_output,
+            }
 
-        return {
-            "valid": True,
-            "output": json_output,
-        }
+    return {
+        "valid": True,
+        "output": json_output,
+    }
 
-    results = pl.read_ndjson(env.results_folder + "/" + model + ".jsonl")
+def actionlint(model, results=None):
+
+    if results is None:
+        results = pl.read_ndjson(env.results_folder + "/" + model + ".jsonl")
 
     levels = {
         "level1": { "score": 0.0, "count": 0, },
@@ -54,6 +56,15 @@ def actionlint(model):
 
         if lint_result and lint_result["valid"]:
             levels[answer_level]["score"] += 1
+        elif lint_result:
+            with open(env.results_folder + "/errors/" + model + ".jsonl", "w+") as f:
+                f.write(json.dumps({
+                    "id": result["id"],
+                    "llm_response": result["llm_response"],
+                    "answer": answer,
+                    "level": result["level"],
+                    "errors": lint_result["output"],
+                }) + "\n")
 
         levels[answer_level]["count"] += 1
 

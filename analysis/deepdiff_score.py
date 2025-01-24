@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.append('../..')
+sys.path.append('../')
 
 import json
 import polars as pl
@@ -9,22 +9,22 @@ from deepdiff import DeepDiff
 import argparse
 
 from extract_yaml import extract_yaml
-from dataset.load_dataset import load_dataset
 import env
 
-def deepdiff_score(model):
+def deepdiff_score(model, results=None):
     def deepdiff_compare(original, generated):
         try:
             original = yaml.safe_load(original)
             generated = yaml.safe_load(generated)
-        except yaml.YAMLError as e:
+        except yaml.YAMLError:
             return None
 
         diff_events = DeepDiff(original, generated, ignore_order=True, verbose_level=2, get_deep_distance=True)
 
         return diff_events["deep_distance"] if "deep_distance" in diff_events else None
 
-    results = pl.read_ndjson(env.results_folder + "/" + model + ".jsonl")
+    if results is None:
+        results = pl.read_ndjson(env.results_folder + "/" + model + ".jsonl")
 
     levels = {
         "level1": { "score": 0.0, "valid_count": 0, "errors": 0, "total": 0},

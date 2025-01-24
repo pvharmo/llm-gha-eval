@@ -1,16 +1,16 @@
 import sys
-sys.path.append("../..")
+sys.path.append("../")
 
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
-import os
 import json
 import env
 import yaml
 import argparse
 
 def visualize_model_performance(data, ax, title, alternative=False):
+    x_values = []
     for model_name, levels in data.items():
         x_values = []
         y_values = []
@@ -45,7 +45,7 @@ def visualize_model_performance(data, ax, title, alternative=False):
     # Customize the plot
     ax.set_xlabel('Level')
     ax.set_ylabel('Average score')
-    ax.set_ylim([0, 1])
+    # ax.set_ylim([0, 1])
     ax.set_title(title)
     ax.grid(True, linestyle='--', alpha=0.7)
     ax.legend(loc="upper left", )
@@ -60,6 +60,10 @@ dfs_actionlint = {}
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str)
 args = parser.parse_args()
+
+if args.config is None:
+    print("Select a config with --config")
+    exit()
 
 configs = yaml.safe_load(open(env.results_folder + "/presentation_configs.yaml"))
 

@@ -20,4 +20,4 @@ dataset = {
     "validation": validation_dataset
 }
 
-finetune(args.model, args.nb_examples, args.epochs, dataset)
+finetune(args.model, args.nb_examples, args.epochs, dataset, "train")
