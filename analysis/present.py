@@ -1,61 +1,12 @@
 import sys
 sys.path.append("../")
 
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-import json
 import env
 import yaml
 import argparse
-
-def visualize_model_performance(data, ax, title, alternative=False):
-    x_values = []
-    for model_name, levels in data.items():
-        x_values = []
-        y_values = []
-
-        # Extract level numbers and calculate scores
-        for level, metrics in levels.items():
-            level_num = int(level.replace('level', ''))
-            score = metrics['score']
-            count = metrics['count'] if not alternative else metrics['valid_count']
-
-            # Calculate score per count, handling division by zero
-            if count > 0:
-                y_value = score / count
-            else:
-                y_value = 0
-
-            x_values.append(level_num)
-            y_values.append(y_value)
-
-        # Plot the line
-        # ax.plot(x_values, y_values, marker='o', linewidth=2, label=model_name)
-        ax.plot(x_values, y_values, marker='o', linewidth=2, label=(model_name[:20] + "..." if len(model_name) > 20 else model_name))
-
-        # Add value annotations
-        for x, y in zip(x_values, y_values):
-            ax.annotate(f'{y:.2f}',
-                       (x, y),
-                       textcoords="offset points",
-                       xytext=(0,10),
-                       ha='center')
-
-    # Customize the plot
-    ax.set_xlabel('Level')
-    ax.set_ylabel('Average score')
-    # ax.set_ylim([0, 1])
-    ax.set_title(title)
-    ax.grid(True, linestyle='--', alpha=0.7)
-    ax.legend(loc="upper left", )
-
-    # Set x-axis to show only integer values
-    ax.set_xticks(x_values)
-
-dfs_bleu = {}
-dfs_deepdiff = {}
-dfs_actionlint = {}
+from plotnine import ggplot, labs, aes, geom_line, geom_point, geom_text, theme
+import polars as pl
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--config", type=str)
@@ -67,17 +18,49 @@ if args.config is None:
 
 configs = yaml.safe_load(open(env.results_folder + "/presentation_configs.yaml"))
 
-# iterate through folders only
-for (model, label) in configs[args.config].items():
-    print(f"Processing {model} with label {label}")
-    dfs_bleu[str(label)] = json.load(open(env.results_folder + "/" + model + "/bleu_score.json"))
-    dfs_deepdiff[str(label)] = json.load(open(env.results_folder + "/" + model + "/deepdiff.json"))
-    dfs_actionlint[str(label)] = json.load(open(env.results_folder + "/" + model + "/actionlint.json"))
+plot = ggplot() + labs(x="Model size", y="BLEU Score", title="BLEU Score by model size")
+plot2 = ggplot() + labs(x="Model size", y="Lint Score", title="Lint Score by model size")
 
-fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(10, 6))
+averages = None
 
-fig = visualize_model_performance(dfs_bleu, ax1, "BLEU Score")
-# fig = visualize_model_performance(dfs_deepdiff, ax2, "DeepDiff Score", True)
-fig = visualize_model_performance(dfs_actionlint, ax3, "ActionLint Score")
-plt.tight_layout()
-plt.show()
+for i, (model, label) in enumerate(configs[args.config].items()):
+    results = pl.read_json(env.results_folder + "/" + model + "/scores.json").unnest("lint_score")
+    split_label = label.split(" ")
+    average = results.filter(pl.col("infinite_loop") == False).with_columns(
+        size=pl.lit(split_label[0]),
+        finetuned=pl.lit(split_label[1]),
+        model=pl.lit(label)
+    ).group_by("model").agg(
+        lint_score=pl.col("valid").mean(),
+        bleu_score=pl.col("bleu_score").mean(),
+        size=pl.col("size").first(),
+        finetuned=pl.col("finetuned").first()
+    )
+    if averages is None:
+        averages = average
+    else:
+        averages = averages.vstack(average)
+
+print(averages)
+if averages is None:
+    print("No data to plot")
+    exit()
+
+def make_plot(plot, data, x, y, group, color, text=True):
+    plot += geom_line(data=data, mapping=aes(x=x, y=y, group=group, color=color))
+    plot += geom_point(data=data, mapping=aes(x=x, y=y, group=group, color=color))
+    if text:
+        plot += geom_text(data=data, mapping=aes(
+            x=x,
+            y=y,
+            label=y),
+            format_string="{:.2f}",
+            va="bottom")
+    plot += theme(legend_position="top", legend_direction="horizontal")
+    return plot
+
+plot = make_plot(plot, averages, "size", "bleu_score", "finetuned", "finetuned")
+plot2 = make_plot(plot2, averages, "size", "lint_score", "finetuned", "finetuned")
+
+plot.save("test.png", width=5, height=5, dpi=600)
+# plot2.show()

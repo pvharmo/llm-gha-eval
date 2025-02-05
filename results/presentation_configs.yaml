@@ -1,22 +1,37 @@
-qwen:
-  CodeLlama-7b-Instruct-hf-t0.7-top_p0.8: CodeLlama7b
+codellama-qwen:
+  CodeLlama-7b-Instruct-hf-t0.7-top_p0.8: CodeLlama7b base
   CodeLlama-7b-Instruct-hf_ft_merged-t0.7-top_p0.8: CodeLlama7b finetuned
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: original
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n100: 100
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n500: 500
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n1000: 1000
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n3000: 3000
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n5500: 5500
-  # Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n8500: 8500
-  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8: 7B base
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 1.5B
-  Qwen2.5-Coder-3B-Instruct-t0.7-top_p0.8-e2-nAll: 3B
-  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: 7B
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8: Qwen2.5 Coder 7B base
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: Qwen2.5 Coder 7B finetuned
+
+qwen1.5b:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: Base model
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n100: 0.1k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n500: 0.5k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n1000: 1k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n3000: 3k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n5500: 5.5k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n8500: 8.5k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll: 10k examples
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 10k examples 2 epochs
+
+epochs:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll: 1 epoch
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 2 epochs
+
+other-paper:
+  CodeLlama7b: CodeLlama7b base
+  CodeLlama7b-ft: CodeLlama7b finetuned
 
 size-comparison:
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 1.5B
-  Qwen2.5-Coder-3B-Instruct-t0.7-top_p0.8-e2-nAll: 3B
-  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: 7B
+  Qwen2.5-Coder-0.5B-Instruct-t0.7-top_p0.8-e2-nAll: 0.5B Finetuned
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 1.5B Finetuned
+  Qwen2.5-Coder-3B-Instruct-t0.7-top_p0.8-e2-nAll: 3B Finetuned
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: 7B Finetuned
+  Qwen2.5-Coder-0.5B-Instruct-t0.7-top_p0.8: 0.5B Base
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: 1.5B Base
+  Qwen2.5-Coder-3B-Instruct-t0.7-top_p0.8: 3B Base
+  Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8: 7B Base
 
 proposition:
   Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: base

@@ -19,17 +19,18 @@ def parse_args():
     parser.add_argument("--cpu-offload-gb", type=float, default=10)
     parser.add_argument("--finetune", type=str, default=None)
     parser.add_argument("--tokenizer", type=str, default=None)
+    parser.add_argument("--max_tokens", type=str, default=8192)
     args = parser.parse_args()
 
     if args.model is None:
         print("You need to specify the model.")
         exit()
 
-    sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=8192)
+    sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=args.max_tokens)
 
-    return args.model, args.finetune, sampling_params, args.cpu_offload_gb, args.tokenizer
+    return args.model, args.finetune, sampling_params, args.cpu_offload_gb, args.tokenizer, args.max_tokens
 
-def load_model(model, finetune=None, cpu_offload_gb=10, tokenizer=None):
+def load_model(model, finetune=None, cpu_offload_gb=10, tokenizer=None, max_tokens=8192):
     # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
     checkpoint_path = env.models_folder + "/" + model
     tokenizer_path = env.models_folder + "/" + (model if tokenizer is None else tokenizer)
@@ -41,7 +42,7 @@ def load_model(model, finetune=None, cpu_offload_gb=10, tokenizer=None):
         tokenizer=tokenizer_path,
         dtype="bfloat16",
         cpu_offload_gb=cpu_offload_gb,
-        max_model_len=8192,
+        max_model_len=max_tokens,
         enable_lora=finetune is not None,
 
     )
