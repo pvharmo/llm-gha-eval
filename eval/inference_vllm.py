@@ -4,11 +4,11 @@ sys.path.append('../')
 from inference import parse_args, generate, load_model, apply_chat_template
 from dataset.load_dataset import format_dataset
 
-model, finetune, sampling_params, cpu_offload_gb, tokenizer, max_tokens = parse_args()
+model, finetune, sampling_params, cpu_offload_gb, tokenizer, max_tokens, n, split = parse_args()
 
 llm, tokenizer, lora_request = load_model(model, finetune, cpu_offload_gb, tokenizer, max_tokens)
 
-dataset = format_dataset("test", 200, False)
+dataset = format_dataset(split, n, False)
 dataset = apply_chat_template(dataset, tokenizer)
 
 outputs = generate(

@@ -11,6 +11,14 @@ from vllm.lora.request import LoRARequest  # type: ignore
 
 import env
 
+def int_or_none(value):
+    if value.lower() == 'none' or value == '':
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{value}' is not an integer or 'None'")
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str)
@@ -20,6 +28,8 @@ def parse_args():
     parser.add_argument("--finetune", type=str, default=None)
     parser.add_argument("--tokenizer", type=str, default=None)
     parser.add_argument("--max_tokens", type=str, default=8192)
+    parser.add_argument("--n", type=int_or_none, default=400, help="Number of prompts to use. If None, use all prompts.")
+    parser.add_argument("--split", type=str, default="test")
     args = parser.parse_args()
 
     if args.model is None:
@@ -28,7 +38,7 @@ def parse_args():
 
     sampling_params = SamplingParams(temperature=args.t, top_p=args.top_p, max_tokens=args.max_tokens)
 
-    return args.model, args.finetune, sampling_params, args.cpu_offload_gb, args.tokenizer, args.max_tokens
+    return args.model, args.finetune, sampling_params, args.cpu_offload_gb, args.tokenizer, args.max_tokens, args.n, args.split
 
 def load_model(model, finetune=None, cpu_offload_gb=10, tokenizer=None, max_tokens=8192):
     # checkpoint_path = "Qwen/Qwen2.5-Coder-1.5B-Instruct"
