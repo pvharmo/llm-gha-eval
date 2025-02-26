@@ -4,7 +4,7 @@ from transformers import AutoTokenizer
 
 
 levels = ["level1", "level2", "level3", "level4", "level5"]
-types = ["finetuning", "validation", "testing"]
+types = ["finetuning", "testing"]
 
 all_conversations = []
 

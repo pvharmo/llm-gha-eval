@@ -615,11 +615,16 @@ class NLUtils:
 
         for i in range(steps_count):
             step = steps_list[i]
+            step_name = step.name
+            if step.run["name"] == "actions/checkout" and "with" in step.step_config and "repository" in step.step_config["with"]:
+                step_name = "Checkout " + step.step_config["with"]["repository"]
+            elif step.run["name"] == "actions/checkout":
+                step_name = "Checkout repository"
             # name, id
             if step.id != "":
-                steps_text += "The {} step is named `{}` and its id is `{}`. ".format(NLUtils.make_ordinal(i + 1), step.name, step.id)
+                steps_text += "The {} step is named `{}` and its id is `{}`. ".format(NLUtils.make_ordinal(i + 1), step_name, step.id)
             else:
-                steps_text += "The {} step is named `{}`. ".format(NLUtils.make_ordinal(i + 1), step.name)
+                steps_text += "The {} step is named `{}`. ".format(NLUtils.make_ordinal(i + 1), step_name)
 
             if not detailed:
                 continue

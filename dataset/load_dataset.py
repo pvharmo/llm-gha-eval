@@ -23,7 +23,16 @@ datasets.logging.set_verbosity_warning()
 #         raise TypeError("The dataset is not a valid dataset object")
 
 def format_dataset(split, examples_per_level=None, with_answers=False, tokens_limit=1024, system_prompt=None):
-    dataset: Dataset = load_dataset("pvharmo/llm-gha", split=split, token=env.hf_access_token)  # type: ignore
+    data_files = {
+        "generator_train": "../dataset/generator_train.jsonl",
+        "corrector_train": "../dataset/corrector_train.jsonl",
+        "judge_train": "../dataset/judge_train.jsonl",
+        "validation": "../dataset/validation.jsonl",
+        "test": "../dataset/testing.jsonl"
+    }
+
+    dataset = load_dataset("json", data_files=data_files, split=split)
+    # dataset: Dataset = load_dataset("pvharmo/llm-gha", split=split, token=env.hf_access_token)  # type: ignore
 
     dataset = dataset.filter(lambda example: example["yaml_tokens_count"] <= tokens_limit)
 

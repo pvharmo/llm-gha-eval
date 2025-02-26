@@ -35,15 +35,11 @@ class CyclomaticComplexityCalculator:
         complexity = self.edges - self.nodes + 2
         return complexity
 
-    def get_graph(self):
-        return self.graph
-
 def upgrade_info(info):
     # Create a CyclomaticComplexityCalculator object
     calculator = CyclomaticComplexityCalculator(info['stats']['jobs'])
     # Calculate the cyclomatic complexity
     complexity = calculator.calculate_cyclomatic_complexity()
-    graph = calculator.get_graph()
 
     new_info = {
         'NumofTriggers' : len(info['stats']['Triggers']),
@@ -56,7 +52,6 @@ def upgrade_info(info):
         'ReusableWfs' : sorted([wf['name'] for wf in info['stats']['ReusableWfs']]),
         'NumofSteps' : info['stats']['TotalNumOfSteps'],
         'CyclomaticComplexity' : complexity,
-        'CFG' : graph
     }
 
     return new_info

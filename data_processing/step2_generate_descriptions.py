@@ -1,10 +1,6 @@
-import logging
-import os
 import json
 import polars as pl
 import yaml
-import traceback
-from pprint import pp
 
 from tqdm import tqdm
 
@@ -31,6 +27,7 @@ def extract_dependencies(workflow):
 workflows = pl.read_csv("../dataset/intermediate/step1_valid_workflows.csv", truncate_ragged_lines=True, batch_size=1000)
 count = workflows.height
 descriptions = []
+skip_count = 0
 for document in tqdm(workflows.iter_rows(named=True), total=count):
     try:
         repo_lang = document['repo_metadata.language']
@@ -41,10 +38,24 @@ for document in tqdm(workflows.iter_rows(named=True), total=count):
         dependencies['vars'] = json.loads(document['ir.CIvars_set'])
         dependencies_str = json.dumps(dependencies)
 
+        workflow = yaml.safe_load(yaml_file)
+
+        skip = False
+
+        for i, job_name in enumerate(workflow["jobs"]):
+            if "steps" in workflow["jobs"][job_name].keys():
+                for i, step in enumerate(workflow["jobs"][job_name]["steps"]):
+                    if not ("name" in step.keys() or ("uses" in step.keys() and "actions/checkout" not in step["uses"])):
+                        skip = True
+                        break
+
+        if skip:
+            skip_count += 1
+            continue
+
         stats = argus_components.Stats(yaml_file, repo_lang, dependencies)
         data = stats.translate_nl()
 
-        # Modify the document to add the stats json
         document['info'] = data
         descriptions.append({
             "id": document["_id"],
@@ -53,8 +64,11 @@ for document in tqdm(workflows.iter_rows(named=True), total=count):
         })
 
     except Exception as e:
-        # print(f"Error {e}")
+        print(f"Error {e}")
         pass
+
+print("Skip count:", skip_count)
+print("Descriptions count:", len(descriptions))
 
 with open("../dataset/intermediate/step2_workflows_descriptions.json", "w") as f:
     json.dump(descriptions, f)

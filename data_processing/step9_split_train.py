@@ -1,44 +1,27 @@
-import sys
-sys.path.append('..')
+import polars as pl
 
-import json
+dataset = pl.read_ndjson("../dataset/finetuning.jsonl")
+testing_dataset = pl.read_ndjson("../dataset/testing.jsonl")
 
-import env
-from datasets import Dataset, load_dataset
-
-def save_dataset(dataset: Dataset, path: str):
-    with open(path, "a") as f:
-        for row in dataset:
-            f.write(json.dumps(row))
-            f.write("\n")
-
-dataset: Dataset = load_dataset("pvharmo/llm-gha", split="train", token=env.hf_access_token)  # type: ignore
-
-dataset = dataset.filter(lambda example: example["yaml_tokens_count"] <= 1024)
+dataset = dataset.filter(pl.col("yaml_tokens_count") <= 1024)
+testing_dataset = testing_dataset.filter(pl.col("yaml_tokens_count") <= 1024)
 
 unique_ids = sorted(list(set(dataset["id"])))
 unique_ids_generator = unique_ids[:10000]
 unique_ids_corrector = unique_ids[10000:20000]
 unique_ids_judge = unique_ids[20000:30000]
-dataset_generator = dataset.filter(lambda example: example["id"] in unique_ids_generator)
-dataset_corrector = dataset.filter(lambda example: example["id"] in unique_ids_corrector)
-dataset_judge = dataset.filter(lambda example: example["id"] in unique_ids_judge)
+dataset_generator = dataset.filter(pl.col("id").is_in(unique_ids_generator))
+dataset_corrector = dataset.filter(pl.col("id").is_in(unique_ids_corrector))
+dataset_judge = dataset.filter(pl.col("id").is_in(unique_ids_judge))
 
-save_dataset(dataset_generator, "../dataset/generator_train.jsonl")
-save_dataset(dataset_corrector, "../dataset/corrector_train.jsonl")
-save_dataset(dataset_judge, "../dataset/judge_train.jsonl")
+print("generator dataset size: ", len(dataset_generator))
+print("corrector dataset size: ", len(dataset_corrector))
+print("judge dataset size: ", len(dataset_judge))
+print("total dataset size: ", len(dataset))
 
-data_files = {
-    "generator_train": "../dataset/generator_train.jsonl",
-    "corrector_train": "../dataset/corrector_train.jsonl",
-    "judge_train": "../dataset/judge_train.jsonl",
-    "validation": "../dataset/validation.jsonl",
-    "test": "../dataset/testing.jsonl"
-}
+dataset_generator.write_ndjson("../dataset/generator_train.jsonl")
+dataset_corrector.write_ndjson("../dataset/corrector_train.jsonl")
+dataset_judge.write_ndjson("../dataset/judge_train.jsonl")
 
-dataset = load_dataset("json", data_files=data_files)  # type: ignore
-
-print(dataset)
-
-input("push to hub? (ctrl+c to cancel, enter to continue)")
-dataset.push_to_hub("llm-gha")
+print("testing dataset size: ", len(testing_dataset))
+testing_dataset.write_ndjson("../dataset/testing.jsonl")
