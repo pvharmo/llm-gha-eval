@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --gres=gpu:1       # Request GPU "generic resources"
 #SBATCH --cpus-per-task=1  # Cores proportional to GPUs: 6 on Cedar, 16 on Graham.
-#SBATCH --mem=32000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
+#SBATCH --mem=16000M       # Memory proportional to GPUs: 32000 Cedar, 64000 Graham.
 #SBATCH --time=0-6:00
 #SBATCH --output=inference_finetune_qwen0.5b_%A_%N-%j.out
 #SBATCH --array=1,2
