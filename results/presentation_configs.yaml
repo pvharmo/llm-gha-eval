@@ -4,16 +4,16 @@ codellama-qwen:
   Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8: Qwen2.5 Coder 7B base
   Qwen2.5-Coder-7B-Instruct-t0.7-top_p0.8-e2-nAll: Qwen2.5 Coder 7B finetuned
 
-qwen1.5b:
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: Base model
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n100: 0.1k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n500: 0.5k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n1000: 1k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n3000: 3k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n5500: 5.5k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n8500: 8.5k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll: 10k examples
-  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 10k examples 2 epochs
+examples-comparison:
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8: 0
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n100: 0.1
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n500: 0.5
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n1000: 1
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n3000: 3
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n5500: 5.5
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-n8500: 8.5
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll: 10
+  Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e2-nAll: 20
 
 epochs:
   Qwen2.5-Coder-1.5B-Instruct-t0.7-top_p0.8-e1-nAll: 1 epoch
