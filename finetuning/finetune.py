@@ -54,10 +54,10 @@ def finetune(model, nb_training_examples=None, nb_epochs=1, dataset=None, split=
         peft_config=peft_conf,
         train_dataset=processed_train_dataset,
         eval_dataset=processed_validation_dataset,
-        max_seq_length=4096,
-        dataset_text_field="text",
-        tokenizer=tokenizer,
-        packing=False
+        # max_seq_length=4096,
+        # dataset_text_field="text",
+        # tokenizer=tokenizer,
+        # packing=False
     )
     train_result = trainer.train()
     metrics = train_result.metrics

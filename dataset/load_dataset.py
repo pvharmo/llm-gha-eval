@@ -22,7 +22,7 @@ datasets.logging.set_verbosity_warning()
 #     else:
 #         raise TypeError("The dataset is not a valid dataset object")
 
-def format_dataset(split, examples_per_level=None, with_answers=False, tokens_limit=1024, system_prompt=None):
+def format_dataset(split, examples_per_level=None, with_answers=False, system_prompt=None):
     data_files = {
         "generator_train": "../dataset/generator_train.jsonl",
         "corrector_train": "../dataset/corrector_train.jsonl",
@@ -31,10 +31,8 @@ def format_dataset(split, examples_per_level=None, with_answers=False, tokens_li
         "test": "../dataset/testing.jsonl"
     }
 
-    dataset = load_dataset("json", data_files=data_files, split=split)
+    dataset: Dataset = load_dataset("json", data_files=data_files, split=split) # type: ignore
     # dataset: Dataset = load_dataset("pvharmo/llm-gha", split=split, token=env.hf_access_token)  # type: ignore
-
-    dataset = dataset.filter(lambda example: example["yaml_tokens_count"] <= tokens_limit)
 
     unique_ids = sorted(list(set(dataset["id"])))
     unique_ids = unique_ids if examples_per_level is None else unique_ids[:examples_per_level]
