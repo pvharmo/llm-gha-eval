@@ -6,4 +6,4 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "${{ 2 + 3 }}"
-        run: "hello world! ${{ 3 + 3}}"
+        run: "echo hello world! ${{ 3 + 3}}"
